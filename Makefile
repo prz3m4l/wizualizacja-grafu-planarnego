@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -pedantic
 
-SRCS = src/main.c src/graph.c src/algorythms.c src/io_manager.c
+SRCS = src/main.c src/graph.c src/algorithms.c src/io_manager.c
 
 EXEC = wizualizacja_grafu
 
