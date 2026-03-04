@@ -6,8 +6,8 @@ typedef struct Node {
   int count; // ilosc sasiadow
   int size;
   int v;
-  double x;
-  double y;
+  double x, y;
+  double dx, dy; // sily
 } Node;
 
 void addVertex(Node *adjList, int v, int u);

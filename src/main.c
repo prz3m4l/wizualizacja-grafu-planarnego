@@ -1,7 +1,8 @@
+#include "algorithms.h"
 #include "graph.h"
 #include "io_manager.h"
-#include "algorithms.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <time.h>
 
 int main(int argc, char *argv[]) {
@@ -17,14 +18,16 @@ int main(int argc, char *argv[]) {
   }
 
   /* wczytywanie grafu */
-  struct Graph graf = {0}; /* zabezpiecznie przed segmentation fault w cleanupOnError */
+  struct Graph graf = {
+      0}; /* zabezpiecznie przed segmentation fault w cleanupOnError */
   if (loadGraph(file, &graf) != 0) {
-      fprintf(stderr, "Blad wczytywania grafu\n");
-      fclose(file);
-      return -1;
+    fprintf(stderr, "Blad wczytywania grafu\n");
+    fclose(file);
+    return -1;
   }
 
   fclose(file);
-  freeGraph(&graf); /* zwolnienie pamięci zaalokowanej na wierzchołki i sąsiadów */
+  freeGraph(
+      &graf); /* zwolnienie pamięci zaalokowanej na wierzchołki i sąsiadów */
   return 0;
 }
