@@ -1,5 +1,4 @@
 #include "graph.h"
-#include <stdlib.h>
 
 void addVertex(Node *vertices, int v, int u) {
   Node *vertex = &vertices[v];

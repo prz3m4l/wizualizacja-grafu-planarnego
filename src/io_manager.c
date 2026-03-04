@@ -1,10 +1,6 @@
 #include "io_manager.h"
-#include <math.h> /* dla funkcji isfinite (czy skonczona?) */
-#include <stdlib.h>
-#include <string.h>
 
-/*  Funkcja zajmująca się wczytaniem danych z pliku */
-static void cleanupOnError(struct Graph *graph, Edge *edges) {
+static void cleanupOnError(Graph *graph, Edge *edges) {
   if (edges)
     free(edges);
   if (graph && graph->vertices) {
@@ -16,10 +12,11 @@ static void cleanupOnError(struct Graph *graph, Edge *edges) {
   }
 }
 
-int loadGraph(FILE *inputFile, struct Graph *graph) {
+int loadGraph(FILE *inputFile, Graph *graph, int width, int height) {
   if (!inputFile || !graph) {
     return -1;
   }
+
   char buff[4096];
   int edges_capacity = 16;
   int edges_count = 0;
@@ -81,15 +78,14 @@ int loadGraph(FILE *inputFile, struct Graph *graph) {
   }
 
   for (int i = 0; i < graph->vertices_n; i++) {
-    graph->vertices[i].x = (double)(rand() % 1000);
-    graph->vertices[i].y = (double)(rand() % 1000);
+    graph->vertices[i].x = (double)rand() / RAND_MAX * width;
+    graph->vertices[i].y = (double)rand() / RAND_MAX * height;
   }
-
-  free(edges);
+  graph->edges = edges;
   return 0;
 }
 
-void freeGraph(struct Graph *graph) {
+void freeGraph(Graph *graph) {
   if (!graph || !graph->vertices)
     return;
   for (int i = 0; i < graph->vertices_n; ++i) {
@@ -97,8 +93,13 @@ void freeGraph(struct Graph *graph) {
     graph->vertices[i].neighbours = NULL;
   }
   free(graph->vertices);
+
+  if (graph->edges) {
+    free(graph->edges);
+  }
+  graph->edges = NULL;
   graph->vertices = NULL;
   graph->vertices_n = graph->edges_n = 0;
 }
 
-void saveResults(FILE *outputFiles, struct Graph *graph) {}
+void saveResults(FILE *outputFiles, Graph *graph) {}

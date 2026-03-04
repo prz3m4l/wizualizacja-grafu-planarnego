@@ -1,11 +1,6 @@
-#include "io_manager.h"
-#include <math.h>
-#include <stdlib.h>
+#include "algorithms.h"
 
-#define MIN_DIST 0.01
-#define TEMP_FACTOR 0.95
-
-void fruchterman_reingold(struct Graph *g, int iterations, double width,
+void fruchterman_reingold(Graph *g, int iterations, double width,
                           double height) {
   double k = sqrt((width * height) / g->vertices_n);
   double t = width / 10; // Temperatura poczatkowa
