@@ -4,7 +4,7 @@ static void cleanupOnError(Graph *graph, Edge *edges) {
   if (edges)
     free(edges);
   if (graph && graph->vertices) {
-    for (int i = 0; i < graph->vertices_n; ++i) {
+    for (int i = 1; i < graph->vertices_n; ++i) {
       free(graph->vertices[i].neighbours);
     }
     free(graph->vertices);
@@ -80,7 +80,8 @@ int loadGraph(FILE *inputFile, Graph *graph, int width, int height) {
     if (edges[edges_count].idA < 0 || edges[edges_count].idB < 0 ||
         !isfinite(edges[edges_count].weight)) {
       cleanupOnError(graph, edges);
-      fprintf(stderr, "Błąd! Identyfikatory ujemne lub waga nie jest skończona!\n");
+      fprintf(stderr,
+              "Błąd! Identyfikatory ujemne lub waga nie jest skończona!\n");
       return -1;
     }
 
@@ -108,7 +109,8 @@ int loadGraph(FILE *inputFile, Graph *graph, int width, int height) {
 
   if (!graph->vertices || !graph->x || !graph->y || !graph->dx || !graph->dy) {
     cleanupOnError(graph, edges);
-    fprintf(stderr, "Błąd alokacji pamięci dla współrzędnych i wierzchołków!\n");
+    fprintf(stderr,
+            "Błąd alokacji pamięci dla współrzędnych i wierzchołków!\n");
     return -1;
   }
 
@@ -117,7 +119,7 @@ int loadGraph(FILE *inputFile, Graph *graph, int width, int height) {
     addVertex(graph->vertices, edges[i].idB, edges[i].idA);
   }
 
-  for (int i = 0; i < graph->vertices_n; i++) {
+  for (int i = 1; i < graph->vertices_n; i++) {
     graph->vertices[i].v = i;
     graph->x[i] = (double)rand() / RAND_MAX * width;
     graph->y[i] = (double)rand() / RAND_MAX * height;
@@ -129,7 +131,7 @@ int loadGraph(FILE *inputFile, Graph *graph, int width, int height) {
 void freeGraph(Graph *graph) {
   if (!graph || !graph->vertices)
     return;
-  for (int i = 0; i < graph->vertices_n; ++i) {
+  for (int i = 1; i < graph->vertices_n; ++i) {
     free(graph->vertices[i].neighbours);
     graph->vertices[i].neighbours = NULL;
   }
@@ -148,7 +150,7 @@ void freeGraph(Graph *graph) {
 }
 
 void saveResults(FILE *outputFile, Graph *graph) {
-  for (int i = 0; i < graph->vertices_n; i++) {
+  for (int i = 1; i < graph->vertices_n; i++) {
     fprintf(outputFile, "%d %g %g\n", graph->vertices[i].v, graph->x[i],
             graph->y[i]);
   }
