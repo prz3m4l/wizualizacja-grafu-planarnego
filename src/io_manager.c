@@ -10,6 +10,25 @@ static void cleanupOnError(Graph *graph, Edge *edges) {
     free(graph->vertices);
     graph->vertices = NULL;
   }
+  if (graph->x) {
+    free(graph->x);
+    graph->x = NULL;
+  }
+  if (graph->y) {
+    free(graph->y);
+    graph->y = NULL;
+  }
+  if (graph->dx) {
+    free(graph->dx);
+    graph->dx = NULL;
+  }
+  if (graph->dy) {
+    free(graph->dy);
+    graph->dy = NULL;
+  }
+
+  graph->vertices_n = 0;
+  graph->edges_n = 0;
 }
 
 int loadGraph(FILE *inputFile, Graph *graph, int width, int height) {
@@ -17,11 +36,19 @@ int loadGraph(FILE *inputFile, Graph *graph, int width, int height) {
     return -1;
   }
 
+  // Zabezpieczenie na wypadek smieci
+  graph->vertices = NULL;
+  graph->x = NULL;
+  graph->y = NULL;
+  graph->dx = NULL;
+  graph->dy = NULL;
+  graph->vertices_n = 0;
+  graph->edges_n = 0;
+
   char buff[4096];
   int edges_capacity = 16;
   int edges_count = 0;
   int max_v = 0;
-
   Edge *edges = malloc(edges_capacity * sizeof(Edge));
   if (!edges) {
     return -1;
@@ -66,8 +93,14 @@ int loadGraph(FILE *inputFile, Graph *graph, int width, int height) {
 
   graph->edges_n = edges_count;
   graph->vertices_n = max_v + 1;
+  // Alokacja pamieci
   graph->vertices = calloc(graph->vertices_n, sizeof(Node));
-  if (!graph->vertices) {
+  graph->x = malloc(graph->vertices_n * sizeof(double));
+  graph->y = malloc(graph->vertices_n * sizeof(double));
+  graph->dx = calloc(graph->vertices_n, sizeof(double));
+  graph->dy = calloc(graph->vertices_n, sizeof(double));
+
+  if (!graph->vertices || !graph->x || !graph->y || !graph->dx || !graph->dy) {
     cleanupOnError(graph, edges);
     return -1;
   }
@@ -78,8 +111,9 @@ int loadGraph(FILE *inputFile, Graph *graph, int width, int height) {
   }
 
   for (int i = 0; i < graph->vertices_n; i++) {
-    graph->vertices[i].x = (double)rand() / RAND_MAX * width;
-    graph->vertices[i].y = (double)rand() / RAND_MAX * height;
+    graph->vertices[i].v = i;
+    graph->x[i] = (double)rand() / RAND_MAX * width;
+    graph->y[i] = (double)rand() / RAND_MAX * height;
   }
   graph->edges = edges;
   return 0;
@@ -100,11 +134,15 @@ void freeGraph(Graph *graph) {
   graph->edges = NULL;
   graph->vertices = NULL;
   graph->vertices_n = graph->edges_n = 0;
+  free(graph->x);
+  free(graph->y);
+  free(graph->dx);
+  free(graph->dy);
 }
 
 void saveResults(FILE *outputFile, Graph *graph) {
   for (int i = 0; i < graph->vertices_n; i++) {
-    fprintf(outputFile, "%d %g %g\n", graph->vertices[i].v,
-            graph->vertices[i].x, graph->vertices[i].y);
+    fprintf(outputFile, "%d %g %g\n", graph->vertices[i].v, graph->x[i],
+            graph->y[i]);
   }
 }

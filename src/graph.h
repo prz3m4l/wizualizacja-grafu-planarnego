@@ -9,8 +9,6 @@ typedef struct Node {
   int count; // ilosc sasiadow
   int size;
   int v;
-  double x, y;
-  double dx, dy; // sily
 } Node;
 
 /*  Struktura Edge przechowująca dane wczytane z pliku na temat połączeń między
@@ -30,6 +28,12 @@ typedef struct Graph {
   Node *vertices; /* dynamiczna tablica węzłów listy sąsiedztwa */
   int vertices_n; /* liczba wierzchołków */
   int edges_n;    /* liczba krawędzi wczytanych z wejścia */
+  // Pozycja
+  double *x;
+  double *y;
+  // Sily
+  double *dx;
+  double *dy;
 } Graph;
 
 /* Dodaje wierzchołek do listy sąsiedztwa */
