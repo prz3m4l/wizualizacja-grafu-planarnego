@@ -34,12 +34,14 @@ int main(int argc, char *argv[]) {
   fruchterman_reingold(&g, ITER, WIDTH, HEIGHT);
 
   if (argc < 3) {
-    fprintf(stderr, "Nie udalo sie wczytac pliku do zapisu!");
+    fprintf(stderr, "Nie udalo sie wczytac pliku do zapisu!\n");
+    freeGraph(&g); /* zwolnienie pamięci przed wyrzuceniem błędu */
     return -1;
   }
   FILE *out_file = fopen(argv[2], "w");
   if (out_file == NULL) {
-    fprintf(stderr, "Blad wczytywania pliku do zapisu");
+    fprintf(stderr, "Blad wczytywania pliku do zapisu!\n");
+    freeGraph(&g); /* zwolnienie pamięci przed wyrzuceniem błędu */
     return -1;
   }
   saveResults(out_file, &g);

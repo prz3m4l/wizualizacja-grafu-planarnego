@@ -33,6 +33,7 @@ static void cleanupOnError(Graph *graph, Edge *edges) {
 
 int loadGraph(FILE *inputFile, Graph *graph, int width, int height) {
   if (!inputFile || !graph) {
+    fprintf(stderr, "Błąd wczytywania pliku lub grafu!\n");
     return -1;
   }
 
@@ -51,6 +52,7 @@ int loadGraph(FILE *inputFile, Graph *graph, int width, int height) {
   int max_v = 0;
   Edge *edges = malloc(edges_capacity * sizeof(Edge));
   if (!edges) {
+    fprintf(stderr, "Błąd alokacji pamięci dla tablicy krawędzi!\n");
     return -1;
   }
   while (fgets(buff, sizeof(buff), inputFile)) {
@@ -61,6 +63,7 @@ int loadGraph(FILE *inputFile, Graph *graph, int width, int height) {
       Edge *tmp = realloc(edges, edges_capacity * sizeof(Edge));
       if (!tmp) {
         cleanupOnError(graph, edges);
+        fprintf(stderr, "Błąd alokacji pamięci!\n");
         return -1;
       }
       edges = tmp;
@@ -69,6 +72,7 @@ int loadGraph(FILE *inputFile, Graph *graph, int width, int height) {
                &edges[edges_count].idA, &edges[edges_count].idB,
                &edges[edges_count].weight) != 4) {
       cleanupOnError(graph, edges);
+      fprintf(stderr, "Błąd wczytywania danych z pliku!\n");
       return -1;
     }
 
@@ -76,6 +80,7 @@ int loadGraph(FILE *inputFile, Graph *graph, int width, int height) {
     if (edges[edges_count].idA < 0 || edges[edges_count].idB < 0 ||
         !isfinite(edges[edges_count].weight)) {
       cleanupOnError(graph, edges);
+      fprintf(stderr, "Błąd! Identyfikatory ujemne lub waga nie jest skończona!\n");
       return -1;
     }
 
@@ -88,6 +93,7 @@ int loadGraph(FILE *inputFile, Graph *graph, int width, int height) {
 
   if (edges_count == 0) {
     cleanupOnError(graph, edges);
+    fprintf(stderr, "Błąd! Liczba wczytanych krawędzi jest równa 0!\n");
     return -1;
   }
 
@@ -102,6 +108,7 @@ int loadGraph(FILE *inputFile, Graph *graph, int width, int height) {
 
   if (!graph->vertices || !graph->x || !graph->y || !graph->dx || !graph->dy) {
     cleanupOnError(graph, edges);
+    fprintf(stderr, "Błąd alokacji pamięci dla współrzędnych i wierzchołków!\n");
     return -1;
   }
 
