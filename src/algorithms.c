@@ -7,6 +7,12 @@ void fruchterman_reingold(Graph *graph, int iterations, double width,
   double t = width / 10; // Temperatura poczatkowa
 
   for (int iter = 0; iter < iterations; iter++) {
+    // Zerowanie sił
+    for (int i = 1; i < vn; i++) {
+      graph->dx[i] = 0.0;
+      graph->dy[i] = 0.0;
+    }
+
     // Odpychanie
     for (int i = 1; i < vn; i++) {
       for (int j = i + 1; j < vn; j++) {
@@ -32,7 +38,7 @@ void fruchterman_reingold(Graph *graph, int iterations, double width,
     }
 
     // Przyciąganie
-    for (int i = 1; i < graph->edges_n; i++) {
+    for (int i = 0; i < graph->edges_n; i++) {
       int idA = graph->edges[i].idA;
       int idB = graph->edges[i].idB;
 
@@ -52,7 +58,7 @@ void fruchterman_reingold(Graph *graph, int iterations, double width,
     }
 
     // Ruch
-    for (int i = 1; i <= vn; i++) {
+    for (int i = 1; i < vn; i++) {
       double dist =
           sqrt(graph->dx[i] * graph->dx[i] + graph->dy[i] * graph->dy[i]);
       if (dist > 0) {
