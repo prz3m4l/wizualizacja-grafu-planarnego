@@ -8,6 +8,7 @@
 #include <math.h>
 #include <stdlib.h>
 
+/* Algorytm Fruchtermana-Reingolda do rysowania grafów planarnych */
 void fruchterman_reingold(Graph *g, int iterations, double width,
                           double height);
 #endif

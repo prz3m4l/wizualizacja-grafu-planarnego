@@ -1,22 +1,12 @@
 #include "algorithms.h"
-#include <math.h>
 
 void fruchterman_reingold(Graph *g, int iterations, double width,
                           double height) {
   double k = sqrt((width * height) / g->vertices_n);
   double t = width / 10; // Temperatura poczatkowa
 
-  Node *v = g->vertices;
-  Edge *e = g->edges;
   int vn = g->vertices_n;
   int en = g->edges_n;
-  // Losowanie pozycji wierzcholkow
-  for (int i = 0; i < vn; i++) {
-    g->x[i] = (double)rand() / RAND_MAX * width;
-    g->y[i] = (double)rand() / RAND_MAX * height;
-    g->dx[i] = 0;
-    g->dy[i] = 0;
-  }
 
   for (int iter = 0; iter < iterations; iter++) {
     // Zerowanie sił
@@ -61,7 +51,7 @@ void fruchterman_reingold(Graph *g, int iterations, double width,
         d = MIN_DIST;
 
       // f_a = d^2 / k -> składowa = (d^2 / k) * (delta / d) = (d * delta) / k
-      double force_factor = (d / k) * e[i].weight;
+      double force_factor = (d / k) * g->edges[i].weight;
       g->dx[idA] -= deltax * force_factor;
       g->dy[idA] -= deltay * force_factor;
       // Przyciąganie w przeciwna stronę
