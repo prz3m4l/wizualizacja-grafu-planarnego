@@ -102,4 +102,9 @@ void freeGraph(Graph *graph) {
   graph->vertices_n = graph->edges_n = 0;
 }
 
-void saveResults(FILE *outputFiles, Graph *graph) {}
+void saveResults(FILE *outputFile, Graph *graph) {
+  for (int i = 0; i < graph->vertices_n; i++) {
+    fprintf(outputFile, "%d %g %g\n", graph->vertices[i].v,
+            graph->vertices[i].x, graph->vertices[i].y);
+  }
+}
