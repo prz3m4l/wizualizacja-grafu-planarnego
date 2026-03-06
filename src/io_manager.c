@@ -3,6 +3,9 @@
 static void cleanupOnError(Graph *graph, Edge *edges) {
   if (edges)
     free(edges);
+
+  graph->edges = NULL; /* Dodanie czyszczenia graph->edges */
+
   if (graph && graph->vertices) {
     for (int i = 1; i < graph->vertices_n; ++i) {
       free(graph->vertices[i].neighbours);
@@ -156,15 +159,19 @@ void freeGraph(Graph *graph) {
 
 void saveResults(FILE *outputFile, Graph *graph, bool isBinary) {
   if(isBinary == false){
-    for (int i = 1; i < graph->vertices_n; i++) {
-      fprintf(outputFile, "%d %g %g\n", graph->vertices[i].v, graph->x[i],
-              graph->y[i]);
+    for (int i = 0; i < graph->vertices_n; i++) {
+      if (graph->vertices[i].count > 0){
+        fprintf(outputFile, "%d %g %g\n", graph->vertices[i].v, graph->x[i],
+                graph->y[i]);
+        }
     }
   }else {
-    for (int i = 1; i < graph->vertices_n; i++) {
-      fwrite(&graph->vertices[i].v, sizeof(int), 1, outputFile);
-      fwrite(&graph->x[i], sizeof(double), 1, outputFile);
-      fwrite(&graph->y[i], sizeof(double), 1, outputFile);
+    for (int i = 0; i < graph->vertices_n; i++) {
+      if (graph->vertices[i].count > 0){
+        fwrite(&graph->vertices[i].v, sizeof(int), 1, outputFile);
+        fwrite(&graph->x[i], sizeof(double), 1, outputFile);
+        fwrite(&graph->y[i], sizeof(double), 1, outputFile);
+      }
     }
   }
 }

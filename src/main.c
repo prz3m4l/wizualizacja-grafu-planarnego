@@ -43,7 +43,7 @@ int main(int argc, char *argv[]) {
             isBinary = true;
             break;
           case '?':
-            fprintf(stderr, "Błąd! Brak wszystkich wymaganych flag programu!\n");
+            fprintf(stderr, "Błąd! Nieznana flaga lub brak argumentu do opcji!\n");
             return -1;
       }
   }
