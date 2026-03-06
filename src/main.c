@@ -7,6 +7,11 @@
 #include <time.h>
 #include <string.h>
 #include <stdbool.h>
+#include <errno.h>
+
+#define MAX_WIDTH  100000
+#define MAX_HEIGHT 100000
+#define MAX_ITER   100000
 
 int main(int argc, char *argv[]) {
   srand(time(NULL));
@@ -18,6 +23,8 @@ int main(int argc, char *argv[]) {
   char *output_file = NULL;
   char *algorithm_name = NULL;
   bool isBinary = false;
+  char *endptr = NULL;
+  long parsedValue = 0;
 
   while ((opt = getopt(argc, argv, "i:o:w:h:t:a:b")) != -1){
       switch(opt){
@@ -28,13 +35,30 @@ int main(int argc, char *argv[]) {
             output_file = optarg;
             break;
           case 'w':
-            width=atoi(optarg);
+            errno = 0;
+            parsedValue = strtol(optarg, &endptr, 10);
+            if (errno != 0 || *endptr != '\0') {
+                fprintf(stderr, "Błąd! Nieprawidłowa wartość dla -w: %s\n", optarg);
+                return -1;
+            }
+            width = (int)parsedValue;
             break;
           case 'h':
-            height=atoi(optarg);
+            errno = 0;
+            parsedValue = strtol(optarg, &endptr, 10);
+            if (errno != 0 || *endptr != '\0') {
+                fprintf(stderr, "Błąd! Nieprawidłowa wartość dla -h: %s\n", optarg);
+                return -1;
+            }
+            height = (int)parsedValue;
             break;
           case 't':
-            iter=atoi(optarg);
+            errno = 0;
+            parsedValue = strtol(optarg, &endptr, 10);
+            if (errno != 0 || *endptr != '\0') {
+              fprintf(stderr, "Błąd! Nieprawidłowa wartość dla -t: %s\n", optarg);
+              return -1;
+            }
             break;
           case 'a':
             algorithm_name = optarg;
@@ -48,10 +72,10 @@ int main(int argc, char *argv[]) {
       }
   }
 
-  if(width <= 0 || height <= 0 || iter <= 0){
-    fprintf(stderr, "Błąd! Wprowadzono niedodatnie wartości wysokości, szerokości lub liczby iteracji!");
+  if (width <= 0 || width > MAX_WIDTH || height <= 0 || height > MAX_HEIGHT || iter <= 0 || iter > MAX_ITER) {
+    fprintf(stderr, "Błąd! Wartości width/height muszą być w zakresie [1, 100000], iter w zakresie [1, 100000]!\n");
     return -1;
-  }
+}
 
   if(input_file == NULL || output_file == NULL){
       fprintf(stderr, "Błąd! Niepoprawne wczytanie plików z argumentów wywołania!\n");
@@ -73,10 +97,7 @@ int main(int argc, char *argv[]) {
   }
 
   fclose(in_file);
-  if(algorithm_name == NULL){
-    printf("Użytkownik nie wybrał algorytmu. Użyto domyślnego algorytmu Fruchtermana-Reingolda.\n");
-    fruchterman_reingold(&graph, iter, width, height);
-  }else if(strcmp(algorithm_name, "fruchterman")==0){
+  if(algorithm_name == NULL || (strcmp(algorithm_name, "fruchterman")==0)){
     fruchterman_reingold(&graph, iter, width, height);
   }else {
     fprintf(stderr, "Błąd! Wprowadzono nieprawdiłową nazwę algorytmu!\n");

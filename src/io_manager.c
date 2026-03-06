@@ -127,7 +127,7 @@ int loadGraph(FILE *inputFile, Graph *graph, int width, int height) {
     addVertex(graph->vertices, edges[i].idB, edges[i].idA);
   }
 
-  for (int i = 1; i < graph->vertices_n; i++) {
+  for (int i = 0; i < graph->vertices_n; i++) {
     graph->vertices[i].v = i;
     graph->x[i] = (double)rand() / RAND_MAX * width;
     graph->y[i] = (double)rand() / RAND_MAX * height;
