@@ -4,9 +4,10 @@
 #include "graph.h"
 #include <math.h>
 #include <stdio.h>
+#include <stdbool.h>
 
 /* Zapisuje wyniki algorytmów do pliku wyjściowego */
-void saveResults(FILE *outputFiles, Graph *graf);
+void saveResults(FILE *outputFiles, Graph *graf, bool isBinary);
 
 /* Wczytuje dane o grafie z pliku i inicjalizuje strukturę Graf */
 int loadGraph(FILE *inputFiles, Graph *graf, int width, int height);

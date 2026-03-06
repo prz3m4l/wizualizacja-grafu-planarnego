@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <time.h>
 #include <string.h>
+#include <stdbool.h>
 
 int main(int argc, char *argv[]) {
   srand(time(NULL));
@@ -16,7 +17,9 @@ int main(int argc, char *argv[]) {
   char *input_file = NULL;
   char *output_file = NULL;
   char *algorithm_name = NULL;
-  while ((opt = getopt(argc, argv, "i:o:w:h:t:a:")) != -1){
+  bool isBinary = false;
+
+  while ((opt = getopt(argc, argv, "i:o:w:h:t:a:b")) != -1){
       switch(opt){
           case 'i':
             input_file = optarg;
@@ -36,6 +39,9 @@ int main(int argc, char *argv[]) {
           case 'a':
             algorithm_name = optarg;
             break;
+          case 'b':
+            isBinary = true;
+            break;
           case '?':
             fprintf(stderr, "Błąd! Brak wszystkich wymaganych flag programu!\n");
             return -1;
@@ -54,30 +60,40 @@ int main(int argc, char *argv[]) {
   }
 
   /* wczytywanie grafu */
-  Graph g = {0}; /* zabezpiecznie przed segmentation fault w cleanupOnError */
-  if (loadGraph(in_file, &g, width, height) != 0) {
+  Graph graph = {0}; /* zabezpiecznie przed segmentation fault w cleanupOnError */
+  if (loadGraph(in_file, &graph, width, height) != 0) {
     fprintf(stderr, "Blad wczytywania grafu\n");
     fclose(in_file);
     return -1;
   }
 
   fclose(in_file);
-  if(algorithm_name == NULL || strcmp(algorithm_name, "fruchterman")==0){
-    fruchterman_reingold(&g, iter, width, height);
+  if(algorithm_name == NULL){
+    printf("Użytkownik nie wybrał algorytmu. Użyto domyślnego algorytmu Fruchtermana-Reingolda.\n");
+    fruchterman_reingold(&graph, iter, width, height);
+  }else if(strcmp(algorithm_name, "fruchterman")==0){
+    fruchterman_reingold(&graph, iter, width, height);
   }else {
     fprintf(stderr, "Błąd! Wprowadzono nieprawdiłową nazwę algorytmu!\n");
-    freeGraph(&g);
+    freeGraph(&graph);
     return -1;
   }
-  FILE *out_file = fopen(output_file, "w");
+
+  FILE *out_file = NULL;
+  if(isBinary == false){
+    out_file = fopen(output_file, "w");
+  }else {
+    out_file = fopen(output_file, "wb");
+  }
   if (out_file == NULL) {
     fprintf(stderr, "Blad wczytywania pliku do zapisu!\n");
-    freeGraph(&g); /* zwolnienie pamięci przed wyrzuceniem błędu */
+    freeGraph(&graph); /* zwolnienie pamięci przed wyrzuceniem błędu */
     return -1;
   }
-  saveResults(out_file, &g);
+
+  saveResults(out_file, &graph, isBinary);
   fclose(out_file);
 
-  freeGraph(&g); /* zwolnienie pamięci zaalokowanej na wierzchołki i sąsiadów */
+  freeGraph(&graph); /* zwolnienie pamięci zaalokowanej na wierzchołki i sąsiadów */
   return 0;
 }

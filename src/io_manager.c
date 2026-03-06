@@ -149,9 +149,17 @@ void freeGraph(Graph *graph) {
   free(graph->dy);
 }
 
-void saveResults(FILE *outputFile, Graph *graph) {
-  for (int i = 1; i < graph->vertices_n; i++) {
-    fprintf(outputFile, "%d %g %g\n", graph->vertices[i].v, graph->x[i],
-            graph->y[i]);
+void saveResults(FILE *outputFile, Graph *graph, bool isBinary) {
+  if(isBinary == false){
+    for (int i = 1; i < graph->vertices_n; i++) {
+      fprintf(outputFile, "%d %g %g\n", graph->vertices[i].v, graph->x[i],
+              graph->y[i]);
+    }
+  }else {
+    for (int i = 1; i < graph->vertices_n; i++) {
+      fwrite(&graph->vertices[i].v, sizeof(int), 1, outputFile);
+      fwrite(&graph->x[i], sizeof(double), 1, outputFile);
+      fwrite(&graph->y[i], sizeof(double), 1, outputFile);
+    }
   }
 }
