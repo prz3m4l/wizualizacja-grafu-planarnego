@@ -48,8 +48,13 @@ int main(int argc, char *argv[]) {
       }
   }
 
+  if(width <= 0 || height <= 0 || iter <= 0){
+    fprintf(stderr, "Błąd! Wprowadzono niedodatnie wartości wysokości, szerokości lub liczby iteracji!");
+    return -1;
+  }
+
   if(input_file == NULL || output_file == NULL){
-      fprintf(stderr, "Błąd wczytania plików z argumentów wywołania!\n");
+      fprintf(stderr, "Błąd! Niepoprawne wczytanie plików z argumentów wywołania!\n");
       return -1;
   }
 

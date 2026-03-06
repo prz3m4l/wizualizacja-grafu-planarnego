@@ -78,11 +78,16 @@ int loadGraph(FILE *inputFile, Graph *graph, int width, int height) {
 
     /* sprawdzanie identyfikatorów nieujemnych oraz czy waga jest skończona */
     if (edges[edges_count].idA < 0 || edges[edges_count].idB < 0 ||
-        !isfinite(edges[edges_count].weight)) {
+        !isfinite(edges[edges_count].weight) || edges[edges_count].weight < 0) {
       cleanupOnError(graph, edges);
       fprintf(stderr,
-              "Błąd! Identyfikatory ujemne lub waga nie jest skończona!\n");
+              "Błąd! Identyfikatory ujemne lub waga jest ujemna/nieskończona!\n");
       return -1;
+    }
+
+    if (edges[edges_count].idA == edges[edges_count].idB) {
+      fprintf(stderr, "Ostrzeżenie: Pominięto pętlę własną dla wierzchołka %d\n", edges[edges_count].idA);
+      continue; /* Przechodzimy do kolejnej linijki w pliku bez zwiększania edges_count */
     }
 
     if (edges[edges_count].idA > max_v)
