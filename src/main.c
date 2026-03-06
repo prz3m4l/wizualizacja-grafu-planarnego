@@ -15,14 +15,14 @@
 
 int main(int argc, char *argv[]) {
   srand(time(NULL));
-  int opt;
+  int opt = 0;
   int width = 1000;
   int height = 1000;
   int iter = 100;
+  bool isBinary = false;
   char *input_file = NULL;
   char *output_file = NULL;
   char *algorithm_name = NULL;
-  bool isBinary = false;
   char *endptr = NULL;
   long parsedValue = 0;
 
@@ -38,7 +38,7 @@ int main(int argc, char *argv[]) {
             errno = 0;
             parsedValue = strtol(optarg, &endptr, 10);
             if (errno != 0 || *endptr != '\0') {
-                fprintf(stderr, "Błąd! Nieprawidłowa wartość dla -w: %s\n", optarg);
+                fprintf(stderr, "Błąd! Nieprawidłowa wartość dla -w: %s!\n", optarg);
                 return -1;
             }
             width = (int)parsedValue;
@@ -47,7 +47,7 @@ int main(int argc, char *argv[]) {
             errno = 0;
             parsedValue = strtol(optarg, &endptr, 10);
             if (errno != 0 || *endptr != '\0') {
-                fprintf(stderr, "Błąd! Nieprawidłowa wartość dla -h: %s\n", optarg);
+                fprintf(stderr, "Błąd! Nieprawidłowa wartość dla -h: %s!\n", optarg);
                 return -1;
             }
             height = (int)parsedValue;
@@ -56,9 +56,10 @@ int main(int argc, char *argv[]) {
             errno = 0;
             parsedValue = strtol(optarg, &endptr, 10);
             if (errno != 0 || *endptr != '\0') {
-              fprintf(stderr, "Błąd! Nieprawidłowa wartość dla -t: %s\n", optarg);
+              fprintf(stderr, "Błąd! Nieprawidłowa wartość dla -t: %s!\n", optarg);
               return -1;
             }
+            iter = (int)parsedValue;
             break;
           case 'a':
             algorithm_name = optarg;
@@ -78,20 +79,20 @@ int main(int argc, char *argv[]) {
 }
 
   if(input_file == NULL || output_file == NULL){
-      fprintf(stderr, "Błąd! Niepoprawne wczytanie plików z argumentów wywołania!\n");
+      fprintf(stderr, "Błąd! Nie podano pliku wejściowego lub wyjściowego!\n");
       return -1;
   }
 
   FILE *in_file = fopen(input_file, "r");
   if (in_file == NULL) {
-    fprintf(stderr, "Blad wczytywania pliku\n");
+    fprintf(stderr, "Błąd! Nie można otworzyć pliku wejściowego!\n");
     return -1;
   }
 
   /* wczytywanie grafu */
   Graph graph = {0}; /* zabezpiecznie przed segmentation fault w cleanupOnError */
   if (loadGraph(in_file, &graph, width, height) != 0) {
-    fprintf(stderr, "Blad wczytywania grafu\n");
+    fprintf(stderr, "Błąd! Nie można wczytać grafu z pliku!\n");
     fclose(in_file);
     return -1;
   }
@@ -100,7 +101,7 @@ int main(int argc, char *argv[]) {
   if(algorithm_name == NULL || (strcmp(algorithm_name, "fruchterman")==0)){
     fruchterman_reingold(&graph, iter, width, height);
   }else {
-    fprintf(stderr, "Błąd! Wprowadzono nieprawdiłową nazwę algorytmu!\n");
+    fprintf(stderr, "Błąd! Podana nazwa algorytmu jest nieprawidłowa!\n");
     freeGraph(&graph);
     return -1;
   }
@@ -112,7 +113,7 @@ int main(int argc, char *argv[]) {
     out_file = fopen(output_file, "wb");
   }
   if (out_file == NULL) {
-    fprintf(stderr, "Blad wczytywania pliku do zapisu!\n");
+    fprintf(stderr, "Błąd! Nie można otworzyć pliku wyjściowego do zapisu!\n");
     freeGraph(&graph); /* zwolnienie pamięci przed wyrzuceniem błędu */
     return -1;
   }

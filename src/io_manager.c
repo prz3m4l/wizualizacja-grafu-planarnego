@@ -36,7 +36,7 @@ static void cleanupOnError(Graph *graph, Edge *edges) {
 
 int loadGraph(FILE *inputFile, Graph *graph, int width, int height) {
   if (!inputFile || !graph) {
-    fprintf(stderr, "Błąd wczytywania pliku lub grafu!\n");
+    fprintf(stderr, "Błąd! Przekazano nieprawidłowy wskaźnik pliku lub grafu!\n");
     return -1;
   }
 
@@ -55,27 +55,36 @@ int loadGraph(FILE *inputFile, Graph *graph, int width, int height) {
   int max_v = 0;
   Edge *edges = malloc(edges_capacity * sizeof(Edge));
   if (!edges) {
-    fprintf(stderr, "Błąd alokacji pamięci dla tablicy krawędzi!\n");
+    fprintf(stderr, "Błąd! Nie można zaalokować pamięci dla tablicy krawędzi!\n");
     return -1;
   }
   while (fgets(buff, sizeof(buff), inputFile)) {
     if (buff[0] == '\n' || buff[0] == '#')
       continue; /* uznajemy puste/komentarz za pomijalne */
+
+    /* Sprawdzenie czy linia zmieściła się w buforze */
+    if (strchr(buff, '\n') == NULL && !feof(inputFile)) {
+        cleanupOnError(graph, edges);
+        fprintf(stderr, "Błąd! Linia w pliku wejściowym jest zbyt długa!\n");
+        return -1;
+    }
+
     if (edges_count >= edges_capacity) {
       edges_capacity *= 2;
       Edge *tmp = realloc(edges, edges_capacity * sizeof(Edge));
       if (!tmp) {
         cleanupOnError(graph, edges);
-        fprintf(stderr, "Błąd alokacji pamięci!\n");
+        fprintf(stderr, "Błąd! Nie można zaalokować pamięci podczas rozszerzania tablicy krawędzi!\n");
         return -1;
       }
       edges = tmp;
     }
+
     if (sscanf(buff, "%9s %d %d %lf", edges[edges_count].name,
                &edges[edges_count].idA, &edges[edges_count].idB,
                &edges[edges_count].weight) != 4) {
       cleanupOnError(graph, edges);
-      fprintf(stderr, "Błąd wczytywania danych z pliku!\n");
+      fprintf(stderr, "Błąd! Linia w pliku nie pasuje do formatu: <nazwa> <idA> <idB> <waga>!\n");
       return -1;
     }
 
@@ -84,7 +93,7 @@ int loadGraph(FILE *inputFile, Graph *graph, int width, int height) {
         !isfinite(edges[edges_count].weight) || edges[edges_count].weight < 0) {
       cleanupOnError(graph, edges);
       fprintf(stderr,
-              "Błąd! Identyfikatory ujemne lub waga jest ujemna/nieskończona!\n");
+              "Błąd! Identyfikatory wierzchołków są ujemne lub waga jest ujemna/nieskończona!\n");
       return -1;
     }
 
@@ -118,7 +127,7 @@ int loadGraph(FILE *inputFile, Graph *graph, int width, int height) {
   if (!graph->vertices || !graph->x || !graph->y || !graph->dx || !graph->dy) {
     cleanupOnError(graph, edges);
     fprintf(stderr,
-            "Błąd alokacji pamięci dla współrzędnych i wierzchołków!\n");
+            "Błąd! Nie można zaalokować pamięci dla współrzędnych i wierzchołków!\n");
     return -1;
   }
 

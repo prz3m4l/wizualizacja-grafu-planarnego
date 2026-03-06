@@ -11,7 +11,7 @@ int addVertex(Node *vertices, int v, int u) {
     vertex->size *= 2;
     int *tmp = realloc(vertex->neighbours, vertex->size * sizeof(int));
     if(tmp == NULL){
-      fprintf(stderr, "Błąd! Brak pamieci dla sasiadow wierzcholka!\n");
+      fprintf(stderr, "Błąd! Nie można zaalokować pamięci dla sąsiadów wierzchołka!\n");
       return -1;
     }else {
         vertex->neighbours=tmp;

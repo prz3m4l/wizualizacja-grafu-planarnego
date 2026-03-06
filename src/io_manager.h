@@ -5,6 +5,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <string.h>
 
 /* Zapisuje wyniki algorytmów do pliku wyjściowego */
 void saveResults(FILE *outputFiles, Graph *graf, bool isBinary);
