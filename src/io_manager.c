@@ -139,8 +139,7 @@ int loadGraph(FILE *inputFile, Graph *graph, int width, int height) {
     }
 
     if (edges[edges_count].idA == edges[edges_count].idB) {
-      fprintf(stderr, "Ostrzeżenie: Pominięto pętlę własną dla wierzchołka %d\n", edges[edges_count].idA);
-      continue; /* Przechodzimy do kolejnej linijki w pliku bez zwiększania edges_count */
+      fprintf(stderr, "Ostrzeżenie: Wykryto pętlę własną dla wierzchołka %d\n", edges[edges_count].idA);
     }
 
     if (edges[edges_count].idA > max_v)
