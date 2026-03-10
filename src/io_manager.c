@@ -126,11 +126,15 @@ int loadGraph(FILE *inputFile, Graph *graph, int width, int height) {
     }
 
     /* sprawdzanie identyfikatorów nieujemnych oraz czy waga jest skończona */
-    if (edges[edges_count].idA < 0 || edges[edges_count].idB < 0 ||
-        !isfinite(edges[edges_count].weight) || edges[edges_count].weight < 0) {
+    if (edges[edges_count].idA < 0 || edges[edges_count].idB < 0){
       cleanupOnError(graph, edges);
       fprintf(stderr,
-              "Błąd! Identyfikatory wierzchołków są ujemne lub waga jest ujemna/nieskończona!\n");
+              "Błąd! Identyfikatory wierzchołków muszą być nieujemne!\n");
+      return -1;
+    }else if(!isfinite(edges[edges_count].weight) || edges[edges_count].weight < 0){
+      cleanupOnError(graph, edges);
+      fprintf(stderr,
+              "Błąd! Waga krawędzi musi być nieujemną liczbą skończoną!\n");
       return -1;
     }
 

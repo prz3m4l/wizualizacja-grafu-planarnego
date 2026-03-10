@@ -18,7 +18,7 @@ int loadGraph(FILE *inputFiles, Graph *graf, int width, int height);
 void freeGraph(Graph *graf);
 
 /* Sprawdza czy procesor jest Little-Endian */
-static int is_little_endian(void);
+int is_little_endian(void);
 
 /* Zamienia bajty w int na Big-Endian, kiedy to potrzebne */
 int32_t to_big_endian_int32(int32_t val);
