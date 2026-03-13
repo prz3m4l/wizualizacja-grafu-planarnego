@@ -1,8 +1,8 @@
 #ifndef GRAPH_H
 #define GRAPH_H
 
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 // Węzeł listy sasiedztwa
 typedef struct Node {
@@ -15,7 +15,7 @@ typedef struct Node {
 /*  Struktura Edge przechowująca dane wczytane z pliku na temat połączeń między
  * wierzchołkami */
 typedef struct Edge {
-  char name[10];
+  char *name;
   int idA;
   int idB;
   double weight;
