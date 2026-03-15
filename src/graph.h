@@ -3,6 +3,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
+#include <string.h>
 
 // Węzeł listy sasiedztwa
 typedef struct Node {
@@ -39,4 +41,8 @@ typedef struct Graph {
 
 /* Dodaje wierzchołek do listy sąsiedztwa */
 int addVertex(Node *adjList, int v, int u);
+
+/* Sprawdzanie spójność grafu */
+int ensureConnectivity(Graph *graph);
+
 #endif

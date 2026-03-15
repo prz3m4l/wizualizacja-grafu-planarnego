@@ -7,13 +7,13 @@ int is_little_endian(void) {
   return byte == 0x01;
 }
 
-int32_t to_big_endian_int32(int32_t val) {
+uint32_t to_big_endian_int32(uint32_t val) {
   if (!is_little_endian()) {
     return val;
   }
   uint8_t in[4] = {0};
   uint8_t out[4] = {0};
-  int32_t result = 0;
+  uint32_t result = 0;
   memcpy(in, &val, 4);
   for (int i = 0; i < 4; i++) {
     out[i] = in[3 - i];
@@ -277,10 +277,10 @@ void saveResults(FILE *outputFile, Graph *graph, bool isBinary) {
   } else {
     for (int i = 0; i < graph->vertices_n; i++) {
       if (graph->vertices[i].count > 0) {
-        int32_t v_be = to_big_endian_int32(graph->vertices[i].v);
+        uint32_t v_be = to_big_endian_int32(graph->vertices[i].v);
         double x_be = to_big_endian_double(graph->x[i]);
         double y_be = to_big_endian_double(graph->y[i]);
-        fwrite(&v_be, sizeof(int32_t), 1, outputFile);
+        fwrite(&v_be, sizeof(uint32_t), 1, outputFile);
         fwrite(&x_be, sizeof(double), 1, outputFile);
         fwrite(&y_be, sizeof(double), 1, outputFile);
       }

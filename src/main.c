@@ -20,18 +20,20 @@ int main(int argc, char *argv[]) {
   int height = 1000;
   int iter = 100;
   bool isBinary = false;
+  bool isText = false;
   char *input_file = NULL;
   char *output_file = NULL;
   char *algorithm_name = NULL;
   char *endptr = NULL;
   long parsedValue = 0;
 
-  while ((opt = getopt(argc, argv, "i:o:w:h:t:a:b")) != -1) {
+  while ((opt = getopt(argc, argv, "i:o:w:h:t:a:b:")) != -1) {
     switch (opt) {
     case 'i':
       input_file = optarg;
       break;
     case 'o':
+      isText = true;
       output_file = optarg;
       break;
     case 'w':
@@ -66,6 +68,7 @@ int main(int argc, char *argv[]) {
       break;
     case 'b':
       isBinary = true;
+      output_file = optarg;
       break;
     case '?':
       fprintf(stderr, "Błąd! Nieznana flaga lub brak argumentu do opcji!\n");
@@ -85,6 +88,11 @@ int main(int argc, char *argv[]) {
     return -1;
   }
 
+  if(isText == true && isBinary == true){
+    fprintf(stderr, "Błąd! Wybrano jednocześnie zapis wyników w formie tekstowej i binarnej!");
+    return -1;
+  }
+
   FILE *in_file = fopen(input_file, "r");
   if (in_file == NULL) {
     fprintf(stderr, "Błąd! Nie można otworzyć pliku wejściowego!\n");
@@ -98,6 +106,14 @@ int main(int argc, char *argv[]) {
     fprintf(stderr, "Błąd! Nie można wczytać grafu z pliku!\n");
     fclose(in_file);
     return -1;
+  }
+
+  int connected = ensureConnectivity(&graph);
+  if(connected == -1){
+    fprintf(stderr, "Błąd! Nie można zaalokować pamięci dla tablicy odwiedzonych wierzchołków!\n");
+    return -1;
+  }else if(connected == 0){
+    fprintf(stderr, "Ostrzeżenie: Graf był niespójny! Automatycznie dodano brakujące krawędzie.\n");
   }
 
   fclose(in_file);
