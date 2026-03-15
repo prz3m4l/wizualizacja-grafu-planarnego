@@ -119,6 +119,8 @@ int main(int argc, char *argv[]) {
   fclose(in_file);
   if (algorithm_name == NULL || (strcmp(algorithm_name, "fruchterman") == 0)) {
     fruchterman_reingold(&graph, iter, width, height);
+  } else if(strcmp(algorithm_name, "kamada") == 0){ 
+    kamada_kawai_layout(&graph, width, height, iter);
   } else {
     fprintf(stderr, "Błąd! Podana nazwa algorytmu jest nieprawidłowa!\n");
     freeGraph(&graph);
