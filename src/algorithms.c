@@ -81,3 +81,141 @@ void fruchterman_reingold(Graph *graph, int iterations, double width,
     t *= TEMP_FACTOR;
   }
 }
+
+int **calculate_distances(Graph *graph){
+  int **matrixDistances = malloc(graph->vertices_n * sizeof(int*));
+  if(matrixDistances == NULL){
+    return NULL;
+  }
+  for(int i = 0; i < graph->vertices_n; i++){
+    matrixDistances[i] = malloc(graph->vertices_n * sizeof(int));
+    if(matrixDistances[i] == NULL){
+      for(int k = i - 1; k >= 0; k--){
+        free(matrixDistances[k]);
+      }
+      free(matrixDistances);
+      return NULL;
+    }
+    for(int j = 0; j < graph->vertices_n; j++){
+      matrixDistances[i][j] = -1;
+    }
+  }
+
+  int *queue = malloc(graph->vertices_n * sizeof(int));
+  if(queue == NULL){
+    for(int i = 0; i < graph->vertices_n; i++){
+      free(matrixDistances[i]);
+    }
+    free(matrixDistances);
+    return NULL;
+  }
+
+  for(int i = 0; i < graph->vertices_n; i++){
+    matrixDistances[i][i] = 0;
+    int head = 0;
+    int tail = 0;
+    queue[tail] = i;
+    tail++;
+    while(head < tail){
+      int current = queue[head];
+      head++;
+      for(int j = 0; j < graph->vertices[current].count; j++){
+        int neighbour = graph->vertices[current].neighbours[j];
+        if(matrixDistances[i][neighbour] == -1){
+          matrixDistances[i][neighbour] = matrixDistances[i][current] + 1;
+          queue[tail] = neighbour;
+          tail++;
+        }
+      }
+    }
+  }
+
+  free(queue);
+  return matrixDistances;
+}
+
+void kamada_kawai_layout(Graph *graph, int width, int height, int iterations){
+  int **distances = calculate_distances(graph);
+  if(distances == NULL){
+    fprintf(stderr, "Błąd! Brak pamięci na alokację tablicy odległości!\n");
+    return;
+  }
+  int maxDistance = 0;
+  for(int i = 0; i<graph->vertices_n; i++){
+    for(int j = 0; j<graph->vertices_n; j++){
+      if(distances[i][j] > maxDistance){
+        maxDistance = distances[i][j];
+      }
+    }
+  }
+  /* Zabezpieczenie przed dzieleniem przez 0 */
+  if(maxDistance == 0){
+    maxDistance = 1; 
+  }
+  double idealLenghtOfSingleEdge = (double)(width < height ? width : height) / maxDistance;
+  Spring **springs = malloc(graph->vertices_n * sizeof(Spring*));
+  for(int i = 0; i < graph->vertices_n; i++){
+    springs[i] = malloc(graph->vertices_n * sizeof(Spring));
+  }
+  for(int i = 0; i < graph->vertices_n; i++){
+    for(int j = 0; j < graph->vertices_n; j++){
+      if(i == j){
+        springs[i][j].l = springs[i][j].k = 0.0;
+        continue;
+      }
+      springs[i][j].l = idealLenghtOfSingleEdge * distances[i][j];
+      springs[i][j].k = K/(distances[i][j]*distances[i][j]);
+    }
+  }
+  for(int i = 0; i<graph->vertices_n; i++){
+    free(distances[i]);
+  }
+  free(distances);
+
+  for(int i = 0; i<graph->vertices_n; i++){
+    graph->x[i] = ((double)rand() / RAND_MAX) * width;
+    graph->y[i] = ((double)rand() / RAND_MAX) * height;
+  }
+
+  double learning_rate = 0.1; // Temperatura
+  double deltaX = 0.0; 
+  double deltaY = 0.0;
+  double dist = 0.0; // Odległość na ekranie
+  double displacement = 0.0; // Jak długa teraz jest
+  double F = 0.0; // Siła sprężyny
+  for(int iter = 0; iter < iterations; iter++){
+    /* Wyzerowanie siły z poprzedniej iteracji */
+    for(int i = 0; i < graph->vertices_n; i++){
+      graph->dx[i] = 0.0;
+      graph->dy[i] = 0.0;
+    }
+    /* Liczenie siły dla każdej pary wierzchołków */
+    for(int i = 0; i < graph->vertices_n; i++){
+      for(int j = 0; j < graph->vertices_n; j++){
+        if(i == j){
+          continue;
+        }
+        deltaX = graph->x[j] - graph->x[i];
+        deltaY = graph->y[j] - graph->y[i];
+        dist = sqrt((deltaX*deltaX) + (deltaY*deltaY));
+        if(dist < 0.0001) {
+            dist = 0.0001;
+        }
+        displacement = dist - springs[i][j].l;
+        F = springs[i][j].k * displacement;
+        graph->dx[i] = graph->dx[i] + F * (deltaX/dist);
+        graph->dy[i] = graph->dy[i] + F * (deltaY/dist);
+      }
+    }
+    /* Przesuwanie wierzchołków o wyliczone siły */
+    for(int i = 0; i < graph->vertices_n; i++){
+      graph->x[i] = graph->x[i] + (graph->dx[i] * learning_rate);
+      graph->y[i] = graph->y[i] + (graph->dy[i] * learning_rate); 
+    }
+    learning_rate = learning_rate * 0.99; /* Aby wierzchołki poruszały się coraz lżej */
+  }
+  for(int i = 0; i < graph->vertices_n; i++){
+    free(springs[i]);
+  }
+  free(springs);
+}
