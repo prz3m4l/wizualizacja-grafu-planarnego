@@ -88,8 +88,9 @@ int main(int argc, char *argv[]) {
     return -1;
   }
 
-  if(isText == true && isBinary == true){
-    fprintf(stderr, "Błąd! Wybrano jednocześnie zapis wyników w formie tekstowej i binarnej!");
+  if (isText == true && isBinary == true) {
+    fprintf(stderr, "Błąd! Wybrano jednocześnie zapis wyników w formie "
+                    "tekstowej i binarnej!");
     return -1;
   }
 
@@ -109,17 +110,19 @@ int main(int argc, char *argv[]) {
   }
 
   int connected = ensureConnectivity(&graph);
-  if(connected == -1){
-    fprintf(stderr, "Błąd! Nie można zaalokować pamięci dla tablicy odwiedzonych wierzchołków!\n");
+  if (connected == -1) {
+    fprintf(stderr, "Błąd! Nie można zaalokować pamięci dla tablicy "
+                    "odwiedzonych wierzchołków!\n");
     return -1;
-  }else if(connected == 0){
-    fprintf(stderr, "Ostrzeżenie: Graf był niespójny! Automatycznie dodano brakujące krawędzie.\n");
+  } else if (connected == 0) {
+    fprintf(stderr, "Ostrzeżenie: Graf był niespójny! Automatycznie dodano "
+                    "brakujące krawędzie.\n");
   }
 
   fclose(in_file);
   if (algorithm_name == NULL || (strcmp(algorithm_name, "fruchterman") == 0)) {
     fruchterman_reingold(&graph, iter, width, height);
-  } else if(strcmp(algorithm_name, "kamada") == 0){ 
+  } else if (strcmp(algorithm_name, "kamada") == 0) {
     kamada_kawai_layout(&graph, width, height, iter);
   } else {
     fprintf(stderr, "Błąd! Podana nazwa algorytmu jest nieprawidłowa!\n");
