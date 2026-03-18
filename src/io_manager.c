@@ -269,21 +269,17 @@ void freeGraph(Graph *graph) {
 void saveResults(FILE *outputFile, Graph *graph, bool isBinary) {
   if (isBinary == false) {
     for (int i = 0; i < graph->vertices_n; i++) {
-      if (graph->vertices[i].count > 0) {
         fprintf(outputFile, "%d %g %g\n", graph->vertices[i].v, graph->x[i],
                 graph->y[i]);
-      }
     }
   } else {
     for (int i = 0; i < graph->vertices_n; i++) {
-      if (graph->vertices[i].count > 0) {
         uint32_t v_be = to_big_endian_int32(graph->vertices[i].v);
         double x_be = to_big_endian_double(graph->x[i]);
         double y_be = to_big_endian_double(graph->y[i]);
         fwrite(&v_be, sizeof(uint32_t), 1, outputFile);
         fwrite(&x_be, sizeof(double), 1, outputFile);
         fwrite(&y_be, sizeof(double), 1, outputFile);
-      }
     }
   }
 }

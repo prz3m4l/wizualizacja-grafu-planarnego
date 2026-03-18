@@ -59,11 +59,11 @@ void fruchterman_reingold(Graph *graph, int iterations, double width,
 
     // Ruch
     for (int i = 0; i < vn; i++) {
-      double dist =
+      double screen_distance =
           sqrt(graph->dx[i] * graph->dx[i] + graph->dy[i] * graph->dy[i]);
-      if (dist > 0) {
-        graph->x[i] += (graph->dx[i] / dist) * fmin(dist, t);
-        graph->y[i] += (graph->dy[i] / dist) * fmin(dist, t);
+      if (screen_distance > 0) {
+        graph->x[i] += (graph->dx[i] / screen_distance) * fmin(screen_distance, t);
+        graph->y[i] += (graph->dy[i] / screen_distance) * fmin(screen_distance, t);
       }
 
       // Bariery(jakby cos chcialo wyjsc)
@@ -200,9 +200,9 @@ void kamada_kawai_layout(Graph *graph, int width, int height, int iterations){
   double learning_rate = 0.1; // Temperatura
   double deltaX = 0.0; 
   double deltaY = 0.0;
-  double dist = 0.0; // Odległość na ekranie
-  double displacement = 0.0; // Jak długa teraz jest
-  double F = 0.0; // Siła sprężyny
+  double screen_distance = 0.0; // Odległość na ekranie
+  double screen_stretch = 0.0; // Jak długa teraz jest
+  double spring_force = 0.0; // Siła sprężyny
   for(int iter = 0; iter < iterations; iter++){
     /* Wyzerowanie siły z poprzedniej iteracji */
     for(int i = 0; i < graph->vertices_n; i++){
@@ -217,14 +217,14 @@ void kamada_kawai_layout(Graph *graph, int width, int height, int iterations){
         }
         deltaX = graph->x[j] - graph->x[i];
         deltaY = graph->y[j] - graph->y[i];
-        dist = sqrt((deltaX*deltaX) + (deltaY*deltaY));
-        if(dist < 0.0001) {
-            dist = 0.0001;
+        screen_distance = sqrt((deltaX*deltaX) + (deltaY*deltaY));
+        if(screen_distance < 0.0001) {
+            screen_distance = 0.0001;
         }
-        displacement = dist - springs[i][j].l;
-        F = springs[i][j].k * displacement;
-        graph->dx[i] = graph->dx[i] + F * (deltaX/dist);
-        graph->dy[i] = graph->dy[i] + F * (deltaY/dist);
+        screen_stretch = screen_distance - springs[i][j].l;
+        spring_force = springs[i][j].k * screen_stretch;
+        graph->dx[i] = graph->dx[i] + spring_force * (deltaX/screen_distance);
+        graph->dy[i] = graph->dy[i] + spring_force * (deltaY/screen_distance);
       }
     }
     /* Przesuwanie wierzchołków o wyliczone siły */
