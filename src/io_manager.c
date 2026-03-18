@@ -1,14 +1,14 @@
 #include "io_manager.h"
 
-int is_little_endian(void) {
+int isLittleEndian(void) {
   uint16_t test = 0x0001;
   uint8_t byte;
   memcpy(&byte, &test, 1);
   return byte == 0x01;
 }
 
-uint32_t to_big_endian_int32(uint32_t val) {
-  if (!is_little_endian()) {
+uint32_t toBigEndianUint32(uint32_t val) {
+  if (!isLittleEndian()) {
     return val;
   }
   uint8_t in[4] = {0};
@@ -22,8 +22,8 @@ uint32_t to_big_endian_int32(uint32_t val) {
   return result;
 }
 
-double to_big_endian_double(double val) {
-  if (!is_little_endian()) {
+double toBigEndianDouble(double val) {
+  if (!isLittleEndian()) {
     return val;
   }
   uint8_t in[8] = {0};
@@ -43,14 +43,14 @@ typedef struct {
   int capacity;
 } VertexList;
 
-void initList(VertexList *list) {
+void initVertexList(VertexList *list) {
   list->count = 0;
   list->capacity = 10;
   list->names = malloc(list->capacity * sizeof(char *));
 }
 
 // Dodaje nazwę tylko jeśli jej jeszcze nie ma
-int addUnique(VertexList *list, const char *name) {
+int addUniqueVertex(VertexList *list, const char *name) {
   // Sprawdź czy już istnieje
   for (int i = 0; i < list->count; i++) {
     if (strcmp(list->names[i], name) == 0)
@@ -60,7 +60,16 @@ int addUnique(VertexList *list, const char *name) {
   // Jeśli brak miejsca powiększ tablicę
   if (list->count >= list->capacity) {
     list->capacity *= 2;
-    list->names = realloc(list->names, list->capacity * sizeof(char *));
+    char **tmp = realloc(list->names, list->capacity * sizeof(char *));
+    if (tmp == NULL) {
+      fprintf(stderr, "Błąd! Nie można zaalokować pamięci podczas rozszerzania tablicy krawędzi!\n");
+      for(int i = 0; i < list->count; i++) {
+        free(list->names[i]);
+      }
+      free(list->names);
+      return -1;
+    }
+    list->names = tmp;
   }
 
   list->names[list->count] = strdup(name);
@@ -69,13 +78,13 @@ int addUnique(VertexList *list, const char *name) {
   return new_id;
 }
 
-void cleanupList(VertexList *list) {
+void cleanupVertexList(VertexList *list) {
   for (int i = 0; i < list->count; i++)
     free(list->names[i]);
   free(list->names);
 }
 
-static int read_edges(FILE *inputFile, Edge **edges_out, int *count_out, VertexList *vList){
+static int readEdges(FILE *inputFile, Edge **edges_out, int *count_out, VertexList *vList){
   char buff[4096];
   int capacity = 16;
   int count = 0;
@@ -126,8 +135,18 @@ static int read_edges(FILE *inputFile, Edge **edges_out, int *count_out, VertexL
       return -1;
     }
 
-    int idA = addUnique(vList, nameA);
-    int idB = addUnique(vList, nameB);
+    int idA = addUniqueVertex(vList, nameA);
+    if (idA == -1) {
+        for (int i = 0; i < count; i++) free(edges[i].name);
+        free(edges);
+        return -1;
+    }
+    int idB = addUniqueVertex(vList, nameB);
+    if (idB == -1) {
+        for (int i = 0; i < count; i++) free(edges[i].name);
+        free(edges);
+        return -1;
+    }
 
     if (idA == idB) {
       fprintf(stderr, "Ostrzeżenie: Wykryto pętlę własną dla wierzchołka %s\n", nameA);
@@ -151,7 +170,7 @@ static int read_edges(FILE *inputFile, Edge **edges_out, int *count_out, VertexL
   return 0;
 }
 
-static int allocate_graph(Graph *graph, int v_count, int e_count) {
+static int allocateGraph(Graph *graph, int v_count, int e_count) {
   graph->vertices_n = v_count;
   graph->edges_n = e_count;
   
@@ -171,21 +190,21 @@ static int allocate_graph(Graph *graph, int v_count, int e_count) {
 
 int loadGraph(FILE *inputFile, Graph *graph, int width, int height) {
   VertexList vList;
-  initList(&vList);
+  initVertexList(&vList);
   Edge *temp_edges = NULL;
   int edges_count = 0;
 
-  if (read_edges(inputFile, &temp_edges, &edges_count, &vList) != 0) {
-    cleanupList(&vList);
+  if (readEdges(inputFile, &temp_edges, &edges_count, &vList) != 0) {
+    cleanupVertexList(&vList);
     return -1;
   }
 
-  if (allocate_graph(graph, vList.count, edges_count) != 0) {
+  if (allocateGraph(graph, vList.count, edges_count) != 0) {
     for(int i = 0; i<edges_count; i++){
       free(temp_edges[i].name);
     }
     free(temp_edges);
-    cleanupList(&vList);
+    cleanupVertexList(&vList);
     return -1;
   }
   graph->edges = temp_edges;
@@ -200,7 +219,7 @@ int loadGraph(FILE *inputFile, Graph *graph, int width, int height) {
     graph->y[i] = (double)rand() / RAND_MAX * height;
   }
 
-  cleanupList(&vList);
+  cleanupVertexList(&vList);
   return 0;
 }
 
@@ -235,9 +254,9 @@ void saveResults(FILE *outputFile, Graph *graph, bool isBinary) {
     }
   } else {
     for (int i = 0; i < graph->vertices_n; i++) {
-        uint32_t v_be = to_big_endian_int32(graph->vertices[i].v);
-        double x_be = to_big_endian_double(graph->x[i]);
-        double y_be = to_big_endian_double(graph->y[i]);
+        uint32_t v_be = toBigEndianUint32(graph->vertices[i].v);
+        double x_be = toBigEndianDouble(graph->x[i]);
+        double y_be = toBigEndianDouble(graph->y[i]);
         fwrite(&v_be, sizeof(uint32_t), 1, outputFile);
         fwrite(&x_be, sizeof(double), 1, outputFile);
         fwrite(&y_be, sizeof(double), 1, outputFile);
