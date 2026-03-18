@@ -1,6 +1,6 @@
 #include "algorithms.h"
 
-void fruchterman_reingold(Graph *graph, int iterations, double width,
+void fruchtermanReingold(Graph *graph, int iterations, double width,
                           double height) {
   int vn = graph->vertices_n;
   double k = sqrt((width * height) / vn);
@@ -26,7 +26,7 @@ void fruchterman_reingold(Graph *graph, int iterations, double width,
         /*
          * sila odpychania = (k * k) / d
          * przesunięcie = sila * (wektor kierunkowy / d) czyli:
-         * (k*k) * (delta / d) = (k*k*delta) / d^2
+         * (k * k) * (delta / d) = (k * k * delta) / d^2
          */
         double force_factor = (k * k) / d2;
         graph->dx[i] += deltax * force_factor;
@@ -82,36 +82,36 @@ void fruchterman_reingold(Graph *graph, int iterations, double width,
   }
 }
 
-int **calculate_distances(Graph *graph){
-  int **matrixDistances = malloc(graph->vertices_n * sizeof(int*));
-  if(matrixDistances == NULL){
+int **calculateDistances(Graph *graph){
+  int **distanceMatrix = malloc(graph->vertices_n * sizeof(int*));
+  if(distanceMatrix == NULL){
     return NULL;
   }
   for(int i = 0; i < graph->vertices_n; i++){
-    matrixDistances[i] = malloc(graph->vertices_n * sizeof(int));
-    if(matrixDistances[i] == NULL){
-      for(int k = i - 1; k >= 0; k--){
-        free(matrixDistances[k]);
+    distanceMatrix[i] = malloc(graph->vertices_n * sizeof(int));
+    if(distanceMatrix[i] == NULL){
+      for (int j = i - 1; j >= 0; j--) {
+        free(distanceMatrix[j]);
       }
-      free(matrixDistances);
+      free(distanceMatrix);
       return NULL;
     }
     for(int j = 0; j < graph->vertices_n; j++){
-      matrixDistances[i][j] = -1;
+      distanceMatrix[i][j] = -1;
     }
   }
 
   int *queue = malloc(graph->vertices_n * sizeof(int));
   if(queue == NULL){
     for(int i = 0; i < graph->vertices_n; i++){
-      free(matrixDistances[i]);
+      free(distanceMatrix[i]);
     }
-    free(matrixDistances);
+    free(distanceMatrix);
     return NULL;
   }
 
   for(int i = 0; i < graph->vertices_n; i++){
-    matrixDistances[i][i] = 0;
+    distanceMatrix[i][i] = 0;
     int head = 0;
     int tail = 0;
     queue[tail] = i;
@@ -121,8 +121,8 @@ int **calculate_distances(Graph *graph){
       head++;
       for(int j = 0; j < graph->vertices[current].count; j++){
         int neighbour = graph->vertices[current].neighbours[j];
-        if(matrixDistances[i][neighbour] == -1){
-          matrixDistances[i][neighbour] = matrixDistances[i][current] + 1;
+        if(distanceMatrix[i][neighbour] == -1){
+          distanceMatrix[i][neighbour] = distanceMatrix[i][current] + 1;
           queue[tail] = neighbour;
           tail++;
         }
@@ -131,11 +131,11 @@ int **calculate_distances(Graph *graph){
   }
 
   free(queue);
-  return matrixDistances;
+  return distanceMatrix;
 }
 
-void kamada_kawai_layout(Graph *graph, int width, int height, int iterations){
-  int **distances = calculate_distances(graph);
+void kamadaKawaiLayout(Graph *graph, int width, int height, int iterations){
+  int **distances = calculateDistances(graph);
   if(distances == NULL){
     fprintf(stderr, "Błąd! Brak pamięci na alokację tablicy odległości!\n");
     return;
@@ -180,11 +180,11 @@ void kamada_kawai_layout(Graph *graph, int width, int height, int iterations){
   for(int i = 0; i < graph->vertices_n; i++){
     for(int j = 0; j < graph->vertices_n; j++){
       if(i == j){
-        springs[i][j].l = springs[i][j].k = 0.0;
+        springs[i][j].length = springs[i][j].stiffness = 0.0;
         continue;
       }
-      springs[i][j].l = idealLengthOfSingleEdge * distances[i][j];
-      springs[i][j].k = K/(distances[i][j]*distances[i][j]);
+      springs[i][j].length = idealLengthOfSingleEdge * distances[i][j];
+      springs[i][j].stiffness = K/(distances[i][j]*distances[i][j]);
     }
   }
   for(int i = 0; i<graph->vertices_n; i++){
@@ -198,12 +198,12 @@ void kamada_kawai_layout(Graph *graph, int width, int height, int iterations){
   }
 
   double learning_rate = 0.1; // Temperatura
-  double deltaX = 0.0; 
-  double deltaY = 0.0;
-  double screen_distance = 0.0; // Odległość na ekranie
-  double screen_stretch = 0.0; // Jak długa teraz jest
-  double spring_force = 0.0; // Siła sprężyny
   for(int iter = 0; iter < iterations; iter++){
+    double deltaX = 0.0; 
+    double deltaY = 0.0;
+    double screen_distance = 0.0; // Odległość na ekranie
+    double screen_stretch = 0.0; // Jak długa teraz jest
+    double spring_force = 0.0; // Siła sprężyny
     /* Wyzerowanie siły z poprzedniej iteracji */
     for(int i = 0; i < graph->vertices_n; i++){
       graph->dx[i] = 0.0;
@@ -221,8 +221,8 @@ void kamada_kawai_layout(Graph *graph, int width, int height, int iterations){
         if(screen_distance < 0.0001) {
             screen_distance = 0.0001;
         }
-        screen_stretch = screen_distance - springs[i][j].l;
-        spring_force = springs[i][j].k * screen_stretch;
+        screen_stretch = screen_distance - springs[i][j].length;
+        spring_force = springs[i][j].stiffness * screen_stretch;
         graph->dx[i] = graph->dx[i] + spring_force * (deltaX/screen_distance);
         graph->dy[i] = graph->dy[i] + spring_force * (deltaY/screen_distance);
       }
