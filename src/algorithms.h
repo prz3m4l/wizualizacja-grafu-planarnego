@@ -1,29 +1,32 @@
 #ifndef ALGORITHMS_H
 #define ALGORITHMS_H
 
+/* Minimalna odległość między wierzchołkami — ochrona przed dzieleniem przez 0 */
 #define MIN_DIST 0.01
+
+/* Współczynnik chłodzenia temperatury w algorytmie Fruchtermana-Reingolda */
 #define TEMP_FACTOR 0.95
 
-/* Globalna stała sprężystości */
+/* Globalna stała sprężystości w algorytmie Kamady-Kawai */
 #define K 1.0
 
 #include "io_manager.h"
 #include <math.h>
 #include <stdlib.h>
 
+/* Parametry sprężyny między parą wierzchołków (algorytm Kamady-Kawai) */
 typedef struct {
-    double l;
-    double k;
+    double length;    /* idealna długość sprężyny (l_ij) */
+    double stiffness; /* stała sprężystości (k_ij) */
 } Spring;
 
 /* Algorytm Fruchtermana-Reingolda do rysowania grafów planarnych */
-void fruchterman_reingold(Graph *g, int iterations, double width,
-                          double height);
+void fruchtermanReingold(Graph *g, int iterations, double width, double height);
 
-/* Obliczanie odległości między wierzchołkami */
-int **calculate_distances(Graph *graph);
+/* Obliczanie macierzy najkrótszych odległości między wszystkimi parami wierzchołków (BFS) */
+int **calculateDistances(Graph *graph);
 
 /* Algorytm Kamady-Kawai do rysowania grafów planarnych */
-void kamada_kawai_layout(Graph *graph, int width, int height, int iterations);
+void kamadaKawaiLayout(Graph *graph, int width, int height, int iterations);
 
 #endif
