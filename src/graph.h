@@ -6,43 +6,43 @@
 #include <stdbool.h>
 #include <string.h>
 
-// Węzeł listy sasiedztwa
+/* Węzeł listy sąsiedztwa reprezentujący jeden wierzchołek grafu */
 typedef struct Node {
-  int *neighbours;
-  int count; // ilosc sasiadow
-  int size;
-  int v;
+  int *neighbours; /* dynamiczna tablica identyfikatorów sąsiadów */
+  int count;       /* aktualna liczba sąsiadów */
+  int size;        /* pojemność tablicy neighbours */
+  int v;           /* identyfikator wierzchołka */
 } Node;
 
-/*  Struktura Edge przechowująca dane wczytane z pliku na temat połączeń między
- * wierzchołkami */
+/* Krawędź grafu przechowująca dane wczytane z pliku wejściowego */
 typedef struct Edge {
-  char *name;
-  int idA;
-  int idB;
-  double weight;
+  char   *name;   /* nazwa krawędzi */
+  int     idA;    /* identyfikator wierzchołka A */
+  int     idB;    /* identyfikator wierzchołka B */
+  double  weight; /* waga krawędzi */
 } Edge;
 
-/*  Struktura Graf używana przez procedury wejścia/wyjścia.
-    Zawiera reprezentację w postaci listy sąsiedztwa oraz listy krawędzi wraz z
-   metadanymi o liczbie wierzchołków i krawędzi. */
+/* Główna struktura grafu używana przez wszystkie moduły programu.
+   Zawiera reprezentację w postaci listy sąsiedztwa oraz listy krawędzi
+   wraz z metadanymi i tablicami współrzędnych. */
 typedef struct Graph {
-  Edge *edges;
-  Node *vertices; /* dynamiczna tablica węzłów listy sąsiedztwa */
-  int vertices_n; /* liczba wierzchołków */
-  int edges_n;    /* liczba krawędzi wczytanych z wejścia */
-  // Pozycja
-  double *x;
-  double *y;
-  // Sily
-  double *dx;
-  double *dy;
+  Edge   *edges;      /* tablica krawędzi wczytanych z pliku */
+  Node   *vertices;   /* dynamiczna tablica węzłów listy sąsiedztwa */
+  int     vertices_n; /* liczba wierzchołków */
+  int     edges_n;    /* liczba krawędzi */
+  double *x;          /* współrzędne x wierzchołków */
+  double *y;          /* współrzędne y wierzchołków */
+  double *dx;         /* składowe x sił działających na wierzchołki */
+  double *dy;         /* składowe y sił działających na wierzchołki */
 } Graph;
 
-/* Dodaje wierzchołek do listy sąsiedztwa */
+/* Dodaje wierzchołek u do listy sąsiedztwa wierzchołka v.
+   Zwraca 0 przy sukcesie, -1 przy błędzie alokacji pamięci. */
 int addVertex(Node *adjList, int v, int u);
 
-/* Sprawdzanie spójność grafu */
+/* Sprawdza spójność grafu i w razie potrzeby dodaje brakujące krawędzie.
+   Zwraca 1 jeśli graf był spójny, 0 jeśli dokonano naprawy,
+   -1 przy błędzie alokacji pamięci. */
 int ensureConnectivity(Graph *graph);
 
 #endif
