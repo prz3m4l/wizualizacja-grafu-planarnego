@@ -152,10 +152,30 @@ void kamada_kawai_layout(Graph *graph, int width, int height, int iterations){
   if(maxDistance == 0){
     maxDistance = 1; 
   }
-  double idealLenghtOfSingleEdge = (double)(width < height ? width : height) / maxDistance;
+  double idealLengthOfSingleEdge = (double)(width < height ? width : height) / maxDistance;
   Spring **springs = malloc(graph->vertices_n * sizeof(Spring*));
+  if(springs == NULL){
+    fprintf(stderr, "Błąd! Brak pamięci na macierz sprężyn!\n");
+    for(int i = 0; i<graph->vertices_n; i++){
+      free(distances[i]);
+    }
+    free(distances);
+    return;
+  }
   for(int i = 0; i < graph->vertices_n; i++){
     springs[i] = malloc(graph->vertices_n * sizeof(Spring));
+    if(springs[i] == NULL){
+      fprintf(stderr, "Błąd! Brak pamięci na wiersz macierzy sprężyn!\n");
+      for(int j = i - 1; j >= 0; j--){
+        free(springs[i]);
+      }
+      free(springs);
+      for(int j = 0; j<graph->vertices_n; j++){
+        free(distances[j]);
+      }
+      free(distances);
+      return;
+    }
   }
   for(int i = 0; i < graph->vertices_n; i++){
     for(int j = 0; j < graph->vertices_n; j++){
@@ -163,7 +183,7 @@ void kamada_kawai_layout(Graph *graph, int width, int height, int iterations){
         springs[i][j].l = springs[i][j].k = 0.0;
         continue;
       }
-      springs[i][j].l = idealLenghtOfSingleEdge * distances[i][j];
+      springs[i][j].l = idealLengthOfSingleEdge * distances[i][j];
       springs[i][j].k = K/(distances[i][j]*distances[i][j]);
     }
   }
@@ -211,6 +231,17 @@ void kamada_kawai_layout(Graph *graph, int width, int height, int iterations){
     for(int i = 0; i < graph->vertices_n; i++){
       graph->x[i] = graph->x[i] + (graph->dx[i] * learning_rate);
       graph->y[i] = graph->y[i] + (graph->dy[i] * learning_rate); 
+
+      if (graph->x[i] < 0){
+        graph->x[i] = 0;
+      }else if (graph->x[i] > width){
+        graph->x[i] = width;
+      }
+      if (graph->y[i] < 0){
+        graph->y[i] = 0;
+      }else if (graph->y[i] > height){
+        graph->y[i] = height;
+      }
     }
     learning_rate = learning_rate * 0.99; /* Aby wierzchołki poruszały się coraz lżej */
   }
