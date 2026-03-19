@@ -14,7 +14,6 @@
 #define MAX_ITER 100000
 
 int main(int argc, char *argv[]) {
-  srand(time(NULL));
   int opt = 0;
   int width = 1000;
   int height = 1000;
@@ -25,9 +24,10 @@ int main(int argc, char *argv[]) {
   char *outputFile = NULL;
   char *algorithmName = NULL;
   char *endPtr = NULL;
+  int seed = 0;
   long parsedValue = 0;
 
-  while ((opt = getopt(argc, argv, "i:o:w:h:t:a:b:")) != -1) {
+  while ((opt = getopt(argc, argv, "i:o:w:h:t:a:b:s:")) != -1) {
     switch (opt) {
     case 'i':
       inputFile = optarg;
@@ -70,10 +70,25 @@ int main(int argc, char *argv[]) {
       isBinary = true;
       outputFile = optarg;
       break;
+    case 's':
+      errno = 0;
+      parsedValue = strtol(optarg, &endPtr, 10);
+      if (errno != 0 || *endPtr != '\0') {
+        fprintf(stderr, "Błąd! Nieprawidłowa wartość dla -s: %s!\n", optarg);
+        return -1;
+      }
+      seed = (int)parsedValue;
+      break;
     case '?':
       fprintf(stderr, "Błąd! Nieznana flaga lub brak argumentu do opcji!\n");
       return -1;
     }
+  }
+
+  if (seed == 0) {
+    srand(time(NULL));
+  } else {
+    srand(seed);
   }
 
   if (width <= 0 || width > MAX_WIDTH || height <= 0 || height > MAX_HEIGHT ||
