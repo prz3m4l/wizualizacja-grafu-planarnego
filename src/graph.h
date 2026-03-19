@@ -1,9 +1,9 @@
 #ifndef GRAPH_H
 #define GRAPH_H
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
 #include <string.h>
 
 // Węzeł listy sasiedztwa
@@ -45,4 +45,5 @@ int addVertex(Node *adjList, int v, int u);
 /* Sprawdzanie spójność grafu */
 int ensureConnectivity(Graph *graph);
 
+bool isGraphPlanar(Graph *graph);
 #endif

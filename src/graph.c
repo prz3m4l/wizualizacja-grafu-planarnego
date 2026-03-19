@@ -1,5 +1,7 @@
 #include "graph.h"
 #include <stdbool.h>
+#include <stdlib.h>
+#include <string.h>
 
 int addVertex(Node *vertices, int v, int u) {
   Node *vertex = &vertices[v];
@@ -42,23 +44,24 @@ static bool dfsFindCycle(const Graph *graph, int current_vertex,
 
   for (int i = 0; i < (graph->vertices[current_vertex].count); i++) {
     int neighbor = graph->vertices[current_vertex].neighbours[i];
+
     if (visited[neighbor] == false) {
-      if (dfsFindCycle(graph, neighbor, parent_vertex, parents, cycles,
+      if (dfsFindCycle(graph, neighbor, current_vertex, parents, cycles,
                        cycle_length, visited)) {
         return true;
       }
-
-    } else if (neighbor != parent_vertex) { // Jeśli sąsiad jest odwiedzony i
-                                            // nie jest rodzicem mamy cykl
-
+    } else if (neighbor != parent_vertex) {
+      // Jeśli sąsiad jest odwiedzony i nie jest rodzicem - mamy cykl
       *cycle_length = 0;
       int curr = current_vertex;
 
-      while (curr != neighbor && curr != 1) {
-        cycles[*cycle_length++] = curr;
+      while (curr != neighbor && curr != -1) {
+        cycles[*cycle_length] = curr;
+        (*cycle_length)++;
         curr = parents[curr];
       }
-      cycles[*cycle_length++] = neighbor;
+      cycles[*cycle_length] = neighbor;
+      (*cycle_length)++;
 
       return true;
     }
@@ -72,37 +75,12 @@ typedef struct {
 
   int *contact_points;
   int contact_count;
+  bool *in_fragment;
+  bool *is_contact;
 
   int *admissible_faces;
   int admissible_count;
 } Fragment;
-
-static void dfsFindFragment(const Graph *graph, int current_vertex,
-                            bool *is_drawn, bool *visited_frag,
-                            Fragment *frag) {
-  visited_frag[current_vertex] = true;
-  frag->vertices[frag->vertices_count++] = current_vertex;
-
-  for (int i = 0; i < graph->vertices[current_vertex].count; i++) {
-    int neighbor = graph->vertices[current_vertex].neighbours[i];
-
-    if (is_drawn[neighbor]) { // jesli narysowany zapisujemy jako contanct point
-                              // unikajac duplikatów
-      bool already_added = false;
-      for (int j = 0; j < frag->contact_count; j++) {
-        if (frag->contact_points[j] == neighbor) {
-          already_added = true;
-          break;
-        }
-      }
-      if (!already_added) {
-        frag->contact_points[frag->contact_count++] = neighbor;
-      }
-    } else if (!visited_frag[neighbor]) {
-      dfsFindFragment(graph, neighbor, is_drawn, visited_frag, frag);
-    }
-  }
-}
 
 typedef struct {
   int *boundary_vertices;
@@ -110,50 +88,41 @@ typedef struct {
 } Face;
 
 Face *initDmpFaces(int *cycle, int cycle_length, int vertices_num,
-                   bool **is_drawn_out, int *faces_count_out) {
-  bool *is_drawn = (bool *)calloc(vertices_num, sizeof(bool));
-  if (is_drawn == NULL)
+                   bool **vertex_drawn_out, int *faces_count_out) {
+  bool *vertex_drawn = (bool *)calloc(vertices_num, sizeof(bool));
+  if (vertex_drawn == NULL)
     return NULL;
 
-  // Oznaczamy wierzchołki z cyklu
   for (int i = 0; i < cycle_length; i++) {
-    is_drawn[cycle[i]] = true;
+    vertex_drawn[cycle[i]] = true;
   }
+  *vertex_drawn_out = vertex_drawn;
 
-  *is_drawn_out = is_drawn;
-
-  // Maksymalna liczba ścian to 2 * num_vertices, z Eulera
   int max_faces = 2 * vertices_num;
   Face *faces = malloc(max_faces * sizeof(Face));
   if (faces == NULL) {
-    free(is_drawn);
+    free(vertex_drawn);
     return NULL;
   }
 
-  // Sciana wewnętrzna
   faces[0].boundary_count = cycle_length;
   faces[0].boundary_vertices = malloc(cycle_length * sizeof(int));
-  for (int i = 0; i < cycle_length; i++) {
+  for (int i = 0; i < cycle_length; i++)
     faces[0].boundary_vertices[i] = cycle[i];
-  }
 
-  // Sciana zewnętrzna
   faces[1].boundary_count = cycle_length;
   faces[1].boundary_vertices = malloc(cycle_length * sizeof(int));
-  for (int i = 0; i < cycle_length; i++) {
+  for (int i = 0; i < cycle_length; i++)
     faces[1].boundary_vertices[i] = cycle[i];
-  }
 
-  *faces_count_out = 2; // Zapisujemy, że mamy na start 2 ściany
-
+  *faces_count_out = 2;
   return faces;
 }
 
 static bool isVertexOnFace(int v, const Face *face) {
   for (int i = 0; i < face->boundary_count; i++) {
-    if (face->boundary_vertices[i] == v) {
+    if (face->boundary_vertices[i] == v)
       return true;
-    }
   }
   return false;
 }
@@ -165,39 +134,389 @@ void findAdmissibleFaces(Fragment *frag, const Face *faces, int faces_count) {
   for (int i = 0; i < faces_count; i++) {
     bool can_be_drawn_here = true;
     for (int j = 0; j < frag->contact_count; j++) {
-
-      // Jeśli chociaż 1 punkt styku nie leży na obwodzie tej ściany to
-      // odrzucamy
       if (!isVertexOnFace(frag->contact_points[j], &faces[i])) {
         can_be_drawn_here = false;
         break;
       }
     }
-
-    // Jeśli wszystkie punkty styku były na obwodzie ściana jest dopuszczalna
     if (can_be_drawn_here) {
       frag->admissible_faces[frag->admissible_count++] = i;
     }
   }
 }
 
-static int addExtraEdge(Graph *graph, int v, int u) {
-  /* Aktualizacja listy sąsiedztwa */
-  if (addVertex(graph->vertices, v, u) == -1) {
-    return -1;
+static void dfsBuildFragment(const Graph *graph, int u, bool *vertex_drawn,
+                             bool *edge_drawn, bool *edge_visited,
+                             Fragment *frag) {
+  int V = graph->vertices_n;
+  for (int i = 0; i < graph->vertices[u].count; i++) {
+    int v = graph->vertices[u].neighbours[i];
+
+    // Rozpatrujemy tylko nienarysowane i jeszcze nieodwiedzone w tym kroku
+    // krawędzie
+    if (!edge_drawn[u * V + v] && !edge_visited[u * V + v]) {
+      edge_visited[u * V + v] = true;
+      edge_visited[v * V + u] = true;
+
+      if (vertex_drawn[v]) {
+        if (!frag->is_contact[v]) {
+          frag->is_contact[v] = true;
+          frag->contact_points[frag->contact_count++] = v;
+        }
+      } else {
+        if (!frag->in_fragment[v]) {
+          frag->in_fragment[v] = true;
+          frag->vertices[frag->vertices_count++] = v;
+          dfsBuildFragment(graph, v, vertex_drawn, edge_drawn, edge_visited,
+                           frag);
+        }
+      }
+    }
   }
-  if (addVertex(graph->vertices, u, v) == -1) {
-    return -1;
+}
+
+Fragment *getAllFragments(const Graph *graph, bool *vertex_drawn,
+                          bool *edge_drawn, int *fragments_count) {
+  int V = graph->vertices_n;
+  int max_frags = graph->edges_n > 0 ? graph->edges_n : 1;
+  Fragment *fragments = malloc(max_frags * sizeof(Fragment));
+  bool *edge_visited = calloc(V * V, sizeof(bool));
+  *fragments_count = 0;
+
+  for (int u = 0; u < V; u++) {
+    for (int i = 0; i < graph->vertices[u].count; i++) {
+      int v = graph->vertices[u].neighbours[i];
+
+      // Znaleźliśmy krawędź, która nie jest na płaszczyźnie i nie należy
+      // jeszcze do żadnego fragmentu
+      if (!edge_drawn[u * V + v] && !edge_visited[u * V + v]) {
+        Fragment *frag = &fragments[*fragments_count];
+
+        frag->vertices = malloc(V * sizeof(int));
+        frag->vertices_count = 0;
+        frag->contact_points = malloc(V * sizeof(int));
+        frag->contact_count = 0;
+        frag->in_fragment = calloc(V, sizeof(bool));
+        frag->is_contact = calloc(V, sizeof(bool));
+        frag->admissible_faces = NULL;
+        frag->admissible_count = 0;
+
+        if (vertex_drawn[u] && vertex_drawn[v]) {
+          frag->contact_points[frag->contact_count++] = u;
+          frag->is_contact[u] = true;
+          frag->contact_points[frag->contact_count++] = v;
+          frag->is_contact[v] = true;
+
+          edge_visited[u * V + v] = true;
+          edge_visited[v * V + u] = true;
+        } else {
+          int start_node = vertex_drawn[u] ? v : u;
+
+          if (vertex_drawn[u]) {
+            frag->contact_points[frag->contact_count++] = u;
+            frag->is_contact[u] = true;
+          } else if (vertex_drawn[v]) {
+            frag->contact_points[frag->contact_count++] = v;
+            frag->is_contact[v] = true;
+          }
+
+          if (!vertex_drawn[start_node]) {
+            frag->vertices[frag->vertices_count++] = start_node;
+            frag->in_fragment[start_node] = true;
+          }
+
+          dfsBuildFragment(graph, start_node, vertex_drawn, edge_drawn,
+                           edge_visited, frag);
+        }
+
+        (*fragments_count)++;
+      }
+    }
   }
 
-  /* Zwiększenie tablicy krawędzi dla algorytmu rysującego */
-  Edge *tmp = realloc(graph->edges, (graph->edges_n + 1) * sizeof(Edge));
-  if (tmp == NULL) {
-    return -1;
+  free(edge_visited);
+  return fragments;
+}
+
+static bool dfsFindPath(const Graph *graph, int current, int start_node,
+                        Fragment *frag, bool *edge_drawn, bool *visited,
+                        int *temp_path, int depth, int **out_path,
+                        int *out_length) {
+  int V = graph->vertices_n;
+  visited[current] = true;
+  temp_path[depth] = current;
+
+  if (frag->is_contact[current] && current != start_node) {
+    *out_length = depth + 1;
+    *out_path = malloc((*out_length) * sizeof(int));
+    for (int i = 0; i < *out_length; i++) {
+      (*out_path)[i] = temp_path[i];
+    }
+    return true;
   }
+
+  for (int i = 0; i < graph->vertices[current].count; i++) {
+    int neighbor = graph->vertices[current].neighbours[i];
+
+    // Upewniamy się, że nie przejdziemy po krawędzi już narysowanej na
+    // płaszczyźnie
+    if (!visited[neighbor] && !edge_drawn[current * V + neighbor]) {
+      if (frag->in_fragment[neighbor] || frag->is_contact[neighbor]) {
+        if (dfsFindPath(graph, neighbor, start_node, frag, edge_drawn, visited,
+                        temp_path, depth + 1, out_path, out_length)) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
+int *findPathBetweenContacts(const Graph *graph, Fragment *frag,
+                             bool *edge_drawn, int *path_length) {
+  if (frag->vertices_count == 0 && frag->contact_count == 2) {
+    *path_length = 2;
+    int *path = malloc(2 * sizeof(int));
+    path[0] = frag->contact_points[0];
+    path[1] = frag->contact_points[1];
+    return path;
+  }
+
+  if (frag->contact_count < 2) {
+    *path_length = 0;
+    return NULL;
+  }
+
+  bool *visited = calloc(graph->vertices_n, sizeof(bool));
+  int *temp_path = malloc(graph->vertices_n * sizeof(int));
+  int *final_path = NULL;
+  *path_length = 0;
+
+  int start_node = frag->contact_points[0];
+
+  dfsFindPath(graph, start_node, start_node, frag, edge_drawn, visited,
+              temp_path, 0, &final_path, path_length);
+
+  free(visited);
+  free(temp_path);
+  return final_path;
+}
+
+void embedPathAndSplitFace(Face **faces_ptr, int *faces_count,
+                           int target_face_idx, int *path, int path_length,
+                           bool *vertex_drawn, bool *edge_drawn, int V) {
+  Face *faces = *faces_ptr;
+  Face target = faces[target_face_idx];
+
+  int idx_start = -1, idx_end = -1;
+  for (int i = 0; i < target.boundary_count; i++) {
+    if (target.boundary_vertices[i] == path[0])
+      idx_start = i;
+    if (target.boundary_vertices[i] == path[path_length - 1])
+      idx_end = i;
+  }
+
+  int arc1_len =
+      (idx_end - idx_start + target.boundary_count) % target.boundary_count + 1;
+  int arc2_len =
+      (idx_start - idx_end + target.boundary_count) % target.boundary_count + 1;
+
+  int new_face1_count = arc1_len + path_length - 2;
+  int *new_boundary1 = malloc(new_face1_count * sizeof(int));
+  int c1 = 0;
+  for (int i = 0; i < arc1_len; i++) {
+    new_boundary1[c1++] =
+        target.boundary_vertices[(idx_start + i) % target.boundary_count];
+  }
+  for (int i = path_length - 2; i >= 1; i--) {
+    new_boundary1[c1++] = path[i];
+  }
+
+  int new_face2_count = arc2_len + path_length - 2;
+  int *new_boundary2 = malloc(new_face2_count * sizeof(int));
+  int c2 = 0;
+  for (int i = 0; i < arc2_len; i++) {
+    new_boundary2[c2++] =
+        target.boundary_vertices[(idx_end + i) % target.boundary_count];
+  }
+  for (int i = 1; i < path_length - 1; i++) {
+    new_boundary2[c2++] = path[i];
+  }
+
+  free(target.boundary_vertices);
+  faces[target_face_idx].boundary_vertices = new_boundary1;
+  faces[target_face_idx].boundary_count = new_face1_count;
+
+  faces[*faces_count].boundary_vertices = new_boundary2;
+  faces[*faces_count].boundary_count = new_face2_count;
+  (*faces_count)++;
+
+  // Oznaczamy i wierzchołki i krawedzie jako narysowane
+  for (int i = 1; i < path_length - 1; i++) {
+    vertex_drawn[path[i]] = true;
+  }
+  for (int i = 0; i < path_length - 1; i++) {
+    edge_drawn[path[i] * V + path[i + 1]] = true;
+    edge_drawn[path[i + 1] * V + path[i]] = true;
+  }
+}
+
+void freeFragments(Fragment *fragments, int count) {
+  if (fragments == NULL)
+    return;
+  for (int i = 0; i < count; i++) {
+    free(fragments[i].vertices);
+    free(fragments[i].contact_points);
+    free(fragments[i].in_fragment);
+    free(fragments[i].is_contact);
+    free(fragments[i].admissible_faces);
+  }
+  free(fragments);
+}
+
+bool isGraphPlanar(Graph *graph) {
+  int V = graph->vertices_n;
+  if (V >= 3) {
+    if (graph->edges_n > 3 * V - 6) {
+      return false;
+    }
+  } else {
+    return true;
+  }
+
+  int *parents = malloc(V * sizeof(int));
+  int *cycles = malloc(V * sizeof(int));
+  bool *visited = calloc(V, sizeof(bool));
+  int cycle_length = 0;
+
+  bool has_cycle = false;
+  for (int i = 0; i < V; i++) {
+    if (!visited[i]) {
+      if (dfsFindCycle(graph, i, -1, parents, cycles, &cycle_length, visited)) {
+        has_cycle = true;
+        break;
+      }
+    }
+  }
+
+  if (!has_cycle) {
+    free(parents);
+    free(cycles);
+    free(visited);
+    return true;
+  }
+
+  bool *vertex_drawn = NULL;
+  int faces_count = 0;
+  Face *faces =
+      initDmpFaces(cycles, cycle_length, V, &vertex_drawn, &faces_count);
+
+  // Tablica Krawędzi Płaszczyzny
+  bool *edge_drawn = calloc(V * V, sizeof(bool));
+
+  // Oznaczamy krawędzie z głównego cyklu jako narysowane
+  for (int i = 0; i < cycle_length; i++) {
+    int u = cycles[i];
+    int v = cycles[(i + 1) % cycle_length];
+    edge_drawn[u * V + v] = true;
+    edge_drawn[v * V + u] = true;
+  }
+
+  bool is_planar = true;
+
+  while (true) {
+    int fragments_count = 0;
+    Fragment *fragments =
+        getAllFragments(graph, vertex_drawn, edge_drawn, &fragments_count);
+
+    if (fragments_count == 0) {
+      break;
+    }
+
+    int chosen_fragment_idx = -1;
+    int target_face_idx = -1;
+
+    for (int i = 0; i < fragments_count; i++) {
+      findAdmissibleFaces(&fragments[i], faces, faces_count);
+
+      if (fragments[i].admissible_count == 0) {
+        is_planar = false;
+        break;
+      }
+      if (fragments[i].admissible_count == 1) {
+        chosen_fragment_idx = i;
+        target_face_idx = fragments[i].admissible_faces[0];
+      }
+    }
+
+    if (!is_planar) {
+      freeFragments(fragments, fragments_count);
+      break;
+    }
+
+    if (chosen_fragment_idx == -1) {
+      chosen_fragment_idx = 0;
+      target_face_idx = fragments[0].admissible_faces[0];
+    }
+
+    int path_length = 0;
+    int *path = findPathBetweenContacts(graph, &fragments[chosen_fragment_idx],
+                                        edge_drawn, &path_length);
+    if (path == NULL) {
+      Fragment *f = &fragments[chosen_fragment_idx];
+
+      // Przechodzimy przez wszystkie wierzchołki ogona
+      for (int k = 0; k < f->vertices_count; k++) {
+        int u = f->vertices[k];
+
+        // Oznaczamy wierzchołek jako narysowany
+        vertex_drawn[u] = true;
+
+        // Oznaczamy wszystkie krawędzie wewnątrz tego ogona jako narysowane
+        for (int j = 0; j < graph->vertices[u].count; j++) {
+          int v = graph->vertices[u].neighbours[j];
+          if (f->in_fragment[v] || f->is_contact[v]) {
+            edge_drawn[u * V + v] = true;
+            edge_drawn[v * V + u] = true;
+          }
+        }
+      }
+
+      // Zwalniamy pamięć z tej iteracji i przeskakujemy do kolejnej
+      freeFragments(fragments, fragments_count);
+      continue;
+    }
+
+    embedPathAndSplitFace(&faces, &faces_count, target_face_idx, path,
+                          path_length, vertex_drawn, edge_drawn, V);
+
+    free(path);
+    freeFragments(fragments, fragments_count);
+  }
+
+  free(parents);
+  free(cycles);
+  free(visited);
+  free(vertex_drawn);
+  free(edge_drawn);
+  for (int i = 0; i < faces_count; i++)
+    free(faces[i].boundary_vertices);
+  free(faces);
+
+  return is_planar;
+}
+
+static int addExtraEdge(Graph *graph, int v, int u) {
+  if (addVertex(graph->vertices, v, u) == -1)
+    return -1;
+  if (addVertex(graph->vertices, u, v) == -1)
+    return -1;
+
+  Edge *tmp = realloc(graph->edges, (graph->edges_n + 1) * sizeof(Edge));
+  if (tmp == NULL)
+    return -1;
   graph->edges = tmp;
 
-  /* Uzupełnienie danych nowej krawędzi */
   graph->edges[graph->edges_n].idA = v;
   graph->edges[graph->edges_n].idB = u;
   graph->edges[graph->edges_n].weight = 1.0;
@@ -209,13 +528,13 @@ static int addExtraEdge(Graph *graph, int v, int u) {
 
 int ensureConnectivity(Graph *graph) {
   bool repaired = false;
-  if (graph->vertices_n == 0) {
+  if (graph->vertices_n == 0)
     return 1;
-  }
+
   bool *visited = calloc(graph->vertices_n, sizeof(bool));
-  if (visited == NULL) {
+  if (visited == NULL)
     return -1;
-  }
+
   dfsVisit(graph, 0, visited);
   for (int i = 0; i < graph->vertices_n; i++) {
     if (visited[i] == false) {
@@ -228,8 +547,5 @@ int ensureConnectivity(Graph *graph) {
     }
   }
   free(visited);
-  if (repaired) {
-    return 0;
-  }
-  return 1;
+  return repaired ? 0 : 1;
 }

@@ -118,7 +118,12 @@ int main(int argc, char *argv[]) {
     fprintf(stderr, "Ostrzeżenie: Graf był niespójny! Automatycznie dodano "
                     "brakujące krawędzie.\n");
   }
-
+  bool planar = isGraphPlanar(&graph);
+  if (planar) {
+    printf("Planarny");
+  } else {
+    printf("Nieplanarny");
+  }
   fclose(in_file);
   if (algorithm_name == NULL || (strcmp(algorithm_name, "fruchterman") == 0)) {
     fruchterman_reingold(&graph, iter, width, height);
