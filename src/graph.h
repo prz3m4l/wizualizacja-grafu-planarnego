@@ -12,6 +12,7 @@ typedef struct Node {
   int count;       /* aktualna liczba sąsiadów */
   int size;        /* pojemność tablicy neighbours */
   int v;           /* identyfikator wierzchołka */
+  char *name;      /* nazwa wierzchołka */
 } Node;
 
 /* Krawędź grafu przechowująca dane wczytane z pliku wejściowego */
