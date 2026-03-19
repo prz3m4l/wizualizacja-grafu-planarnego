@@ -217,6 +217,7 @@ int loadGraph(FILE *inputFile, Graph *graph, int width, int height) {
     graph->vertices[i].v = i;
     graph->x[i] = (double)rand() / RAND_MAX * width;
     graph->y[i] = (double)rand() / RAND_MAX * height;
+    graph->vertices[i].name = strdup(vList.names[i]);
   }
 
   cleanupVertexList(&vList);
@@ -227,6 +228,8 @@ void freeGraph(Graph *graph) {
   if (!graph || !graph->vertices)
     return;
   for (int i = 0; i < graph->vertices_n; ++i) {
+    free(graph->vertices[i].name);
+    graph->vertices[i].name = NULL;
     free(graph->vertices[i].neighbours);
     graph->vertices[i].neighbours = NULL;
   }
@@ -249,17 +252,20 @@ void freeGraph(Graph *graph) {
 void saveResults(FILE *outputFile, Graph *graph, bool isBinary) {
   if (isBinary == false) {
     for (int i = 0; i < graph->vertices_n; i++) {
-        fprintf(outputFile, "%d %g %g\n", graph->vertices[i].v, graph->x[i],
+        fprintf(outputFile, "%s %g %g\n", graph->vertices[i].name, graph->x[i],
                 graph->y[i]);
     }
   } else {
     for (int i = 0; i < graph->vertices_n; i++) {
-        uint32_t v_be = toBigEndianUint32(graph->vertices[i].v);
-        double x_be = toBigEndianDouble(graph->x[i]);
-        double y_be = toBigEndianDouble(graph->y[i]);
-        fwrite(&v_be, sizeof(uint32_t), 1, outputFile);
-        fwrite(&x_be, sizeof(double), 1, outputFile);
-        fwrite(&y_be, sizeof(double), 1, outputFile);
+      uint32_t name_len = strlen(graph->vertices[i].name);
+      uint32_t len_be = toBigEndianUint32(name_len);
+      double x_be = toBigEndianDouble(graph->x[i]);
+      double y_be = toBigEndianDouble(graph->y[i]);
+      
+      fwrite(&len_be, sizeof(uint32_t), 1, outputFile);
+      fwrite(graph->vertices[i].name, sizeof(char), name_len, outputFile);
+      fwrite(&x_be, sizeof(double), 1, outputFile);
+      fwrite(&y_be, sizeof(double), 1, outputFile);
     }
   }
 }
