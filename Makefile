@@ -16,4 +16,4 @@ clean:
 	rm -f $(EXEC)
 
 run: $(EXEC)
-	./$(EXEC) -i graf.txt -o wyniki.txt -a kamada
+	./$(EXEC) -i data/graf.txt -o data/wyniki.txt -a kamada -s 17
