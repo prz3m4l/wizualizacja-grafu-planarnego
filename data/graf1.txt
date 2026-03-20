@@ -1,0 +1,6 @@
+# Prosty graf planarny
+e1 A B 1.0
+e2 B C 1.0
+e3 C D 1.0
+e4 D A 1.0
+e5 A C 1.5

@@ -1,7 +1,4 @@
 #include "graph.h"
-#include <stdbool.h>
-#include <stdlib.h>
-#include <string.h>
 
 int addVertex(Node *vertices, int v, int u) {
   Node *vertex = &vertices[v];
@@ -548,4 +545,54 @@ int ensureConnectivity(Graph *graph) {
   }
   free(visited);
   return repaired ? 0 : 1;
+}
+
+int makeGraphPlanar(Graph *graph) {
+  if (isGraphPlanar(graph)) {
+    return 0; 
+  }
+
+  fprintf(stdout, "Wykryto graf nieplanarny! Rozpoczynam naprawę (usuwanie krawędzi)...\n");
+
+  int origEdgesCount = graph->edges_n;
+  Edge *origEdges = graph->edges;
+
+  graph->edges = malloc(origEdgesCount * sizeof(Edge));
+  if (graph->edges == NULL) {
+    fprintf(stderr, "Błąd alokacji podczas naprawy planarności!\n");
+    return -1;
+  }
+  graph->edges_n = 0;
+
+  for (int i = 0; i < graph->vertices_n; i++) {
+    graph->vertices[i].count = 0;
+  }
+
+  int removedEdges = 0;
+
+  for (int i = 0; i < origEdgesCount; i++) {
+    Edge currentEdge = origEdges[i];
+
+    graph->edges[graph->edges_n] = currentEdge;
+    graph->edges_n++;
+    addVertex(graph->vertices, currentEdge.idA, currentEdge.idB);
+    addVertex(graph->vertices, currentEdge.idB, currentEdge.idA);
+
+    if (!isGraphPlanar(graph)) {
+      graph->edges_n--;
+      graph->vertices[currentEdge.idA].count--;
+      graph->vertices[currentEdge.idB].count--;
+
+      fprintf(stdout, "Usunięto krawędź kolidującą: %s (%d - %d)\n", 
+              currentEdge.name, currentEdge.idA, currentEdge.idB);
+      
+      free(currentEdge.name); 
+      removedEdges++;
+    }
+  }
+
+  free(origEdges);
+  
+  fprintf(stdout, "Naprawa zakończona. Usunięto %d krawędzi.\n", removedEdges);
+  return removedEdges;
 }

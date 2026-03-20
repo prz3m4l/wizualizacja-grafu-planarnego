@@ -1,0 +1,11 @@
+# Graf K5 (Nieplanarny - wymusi naprawe)
+e1 V1 V2 1.0
+e2 V1 V3 1.0
+e3 V1 V4 1.0
+e4 V1 V5 1.0
+e5 V2 V3 1.0
+e6 V2 V4 1.0
+e7 V2 V5 1.0
+e8 V3 V4 1.0
+e9 V3 V5 1.0
+e10 V4 V5 1.0
