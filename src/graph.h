@@ -46,4 +46,7 @@ int addVertex(Node *adjList, int v, int u);
 int ensureConnectivity(Graph *graph);
 
 bool isGraphPlanar(Graph *graph);
+
+int makeGraphPlanar(Graph *graph);
+
 #endif

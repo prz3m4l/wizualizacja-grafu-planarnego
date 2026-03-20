@@ -1,0 +1,9 @@
+# Wyspa nr 1
+e1 A B 1.0
+e2 B C 1.0
+e3 C A 1.0
+
+# Wyspa nr 2
+e4 X Y 1.0
+e5 Y Z 1.0
+e6 Z X 1.0

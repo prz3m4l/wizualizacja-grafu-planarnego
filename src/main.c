@@ -109,20 +109,34 @@ int main(int argc, char *argv[]) {
     return -1;
   }
 
-  int connected = ensureConnectivity(&graph);
-  if (connected == -1) {
-    fprintf(stderr, "Błąd! Nie można zaalokować pamięci dla tablicy "
-                    "odwiedzonych wierzchołków!\n");
-    return -1;
-  } else if (connected == 0) {
-    fprintf(stderr, "Ostrzeżenie: Graf był niespójny! Automatycznie dodano "
-                    "brakujące krawędzie.\n");
-  }
-  bool planar = isGraphPlanar(&graph);
-  if (planar) {
-    printf("Planarny");
+  printf("========================================\n");
+  if (isGraphPlanar(&graph)) {
+      printf("[TEST] Graf wejściowy JEST planarny.\n");
   } else {
-    printf("Nieplanarny");
+      int removed = makeGraphPlanar(&graph);
+      if (removed == -1) {
+        fprintf(stderr, "Błąd! Nie można zaalokować pamięci podczas naprawy planarności!\n");
+        freeGraph(&graph);
+        return -1;
+      } else if (removed > 0) {
+        fprintf(stderr, "Ostrzeżenie: Usunięto %d krawędzi aby zapewnić planarność grafu.\n", removed);
+      }
+      
+      if (isGraphPlanar(&graph)) {
+          printf("[TEST] Sukces! Graf po przetworzeniu JEST planarny.\n");
+      } else {
+          printf("[TEST] UWAGA BŁĄD! Graf po naprawie wciąż NIE JEST planarny!\n");
+      }
+  }
+  printf("========================================\n\n");
+
+  int connected = ensureConnectivity(&graph);
+  if(connected == -1){
+    fprintf(stderr, "Błąd! Nie można zaalokować pamięci dla tablicy odwiedzonych wierzchołków!\n");
+    freeGraph(&graph);
+    return -1;
+  }else if(connected == 0){
+    fprintf(stderr, "Ostrzeżenie: Graf był niespójny! Automatycznie dodano brakujące krawędzie.\n");
   }
   fclose(in_file);
   if (algorithm_name == NULL || (strcmp(algorithm_name, "fruchterman") == 0)) {
