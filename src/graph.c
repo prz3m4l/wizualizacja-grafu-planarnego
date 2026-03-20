@@ -84,6 +84,58 @@ typedef struct {
   int boundary_count;
 } Face;
 
+static bool checkFragmentPlanarity(const Graph *graph, Fragment *f) {
+  int sub_V = f->vertices_count + f->contact_count;
+  if (sub_V < 3)
+    return true;
+
+  int *orig_to_sub = malloc(graph->vertices_n * sizeof(int));
+  for (int i = 0; i < graph->vertices_n; i++)
+    orig_to_sub[i] = -1;
+
+  int current_sub_id = 0;
+  for (int i = 0; i < f->vertices_count; i++) {
+    orig_to_sub[f->vertices[i]] = current_sub_id++;
+  }
+  for (int i = 0; i < f->contact_count; i++) {
+    orig_to_sub[f->contact_points[i]] = current_sub_id++;
+  }
+
+  Graph sub = {0};
+  sub.vertices_n = sub_V;
+  sub.vertices = calloc(sub_V, sizeof(Node));
+  for (int i = 0; i < sub_V; i++)
+    sub.vertices[i].v = i;
+
+  for (int i = 0; i < f->vertices_count; i++) {
+    int u = f->vertices[i];
+    for (int j = 0; j < graph->vertices[u].count; j++) {
+      int v = graph->vertices[u].neighbours[j];
+      if (f->in_fragment[v]) {
+        if (u < v) {
+          addVertex(sub.vertices, orig_to_sub[u], orig_to_sub[v]);
+          addVertex(sub.vertices, orig_to_sub[v], orig_to_sub[u]);
+          sub.edges_n++;
+        }
+      } else if (f->is_contact[v]) {
+        addVertex(sub.vertices, orig_to_sub[u], orig_to_sub[v]);
+        addVertex(sub.vertices, orig_to_sub[v], orig_to_sub[u]);
+        sub.edges_n++;
+      }
+    }
+  }
+
+  bool result = isGraphPlanar(&sub);
+
+  for (int i = 0; i < sub_V; i++) {
+    free(sub.vertices[i].neighbours);
+  }
+  free(sub.vertices);
+  free(orig_to_sub);
+
+  return result;
+}
+
 Face *initDmpFaces(int *cycle, int cycle_length, int vertices_num,
                    bool **vertex_drawn_out, int *faces_count_out) {
   bool *vertex_drawn = (bool *)calloc(vertices_num, sizeof(bool));
@@ -461,6 +513,12 @@ bool isGraphPlanar(Graph *graph) {
                                         edge_drawn, &path_length);
     if (path == NULL) {
       Fragment *f = &fragments[chosen_fragment_idx];
+
+      if (!checkFragmentPlanarity(graph, f)) {
+        is_planar = false;
+        freeFragments(fragments, fragments_count);
+        break;
+      }
 
       // Przechodzimy przez wszystkie wierzchołki ogona
       for (int k = 0; k < f->vertices_count; k++) {
