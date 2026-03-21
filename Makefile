@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -pedantic -O2 -std=c11
+CFLAGS = -Wall -Wextra -pedantic -O2
 LDFLAGS = -lm
 
 SRCS = src/main.c src/graph.c src/algorithms.c src/io_manager.c

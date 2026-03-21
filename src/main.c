@@ -168,7 +168,6 @@ int main(int argc, char *argv[]) {
   saveResults(outFile, &graph, isBinary);
   fclose(outFile);
 
-  freeGraph(
-      &graph); /* zwolnienie pamięci zaalokowanej na wierzchołki i sąsiadów */
+  freeGraph(&graph); /* zwolnienie pamięci zaalokowanej na wierzchołki i sąsiadów */
   return 0;
 }
