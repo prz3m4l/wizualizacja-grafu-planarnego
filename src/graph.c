@@ -628,50 +628,77 @@ int ensureConnectivity(Graph *graph) {
 
 int makeGraphPlanar(Graph *graph) {
   if (isGraphPlanar(graph)) {
-    return 0; 
+    return 0;
   }
-
-  fprintf(stdout, "Wykryto graf nieplanarny! Rozpoczynam naprawę (usuwanie krawędzi)...\n");
-
+ 
+  fprintf(stderr, "Ostrzeżenie: Graf nieplanarny! Rozpoczynam naprawę (usuwanie krawędzi)...\n");
+ 
   int origEdgesCount = graph->edges_n;
   Edge *origEdges = graph->edges;
-
+ 
   graph->edges = malloc(origEdgesCount * sizeof(Edge));
   if (graph->edges == NULL) {
-    fprintf(stderr, "Błąd alokacji podczas naprawy planarności!\n");
+    fprintf(stderr, "Błąd! Nie można zaalokować pamięci podczas naprawy planarności!\n");
     return -1;
   }
   graph->edges_n = 0;
-
+ 
   for (int i = 0; i < graph->vertices_n; i++) {
     graph->vertices[i].count = 0;
   }
-
+ 
+  /* Tarcza Eulera: graf planarny ma co najwyżej 3v-6 krawędzi */
+  int max_edges_limit = (graph->vertices_n >= 3) ? (3 * graph->vertices_n - 6) : origEdgesCount;
+ 
   int removedEdges = 0;
-
+ 
   for (int i = 0; i < origEdgesCount; i++) {
     Edge currentEdge = origEdges[i];
-
+ 
+    /* Tarcza Eulera: odrzuć bez wywołania isGraphPlanar */
+    if (graph->edges_n == max_edges_limit) {
+      fprintf(stderr, "Ostrzeżenie: Odrzucono krawędź \"%s\" (%d - %d) aby zapewnić planarność.\n",
+              currentEdge.name, currentEdge.idA, currentEdge.idB);
+      free(currentEdge.name);
+      removedEdges++;
+      continue;
+    }
+ 
     graph->edges[graph->edges_n] = currentEdge;
     graph->edges_n++;
     addVertex(graph->vertices, currentEdge.idA, currentEdge.idB);
     addVertex(graph->vertices, currentEdge.idB, currentEdge.idA);
-
+ 
     if (!isGraphPlanar(graph)) {
       graph->edges_n--;
-      graph->vertices[currentEdge.idA].count--;
-      graph->vertices[currentEdge.idB].count--;
-
-      fprintf(stdout, "Usunięto krawędź kolidującą: %s (%d - %d)\n", 
+ 
+      Node *na = &graph->vertices[currentEdge.idA];
+      for (int j = 0; j < na->count; j++) {
+        if (na->neighbours[j] == currentEdge.idB) {
+          na->neighbours[j] = na->neighbours[na->count - 1];
+          na->count--;
+          break;
+        }
+      }
+ 
+      Node *nb = &graph->vertices[currentEdge.idB];
+      for (int j = 0; j < nb->count; j++) {
+        if (nb->neighbours[j] == currentEdge.idA) {
+          nb->neighbours[j] = nb->neighbours[nb->count - 1];
+          nb->count--;
+          break;
+        }
+      }
+ 
+      fprintf(stderr, "Ostrzeżenie: Odrzucono krawędź \"%s\" (%d - %d) aby zapewnić planarność.\n",
               currentEdge.name, currentEdge.idA, currentEdge.idB);
-      
-      free(currentEdge.name); 
+      free(currentEdge.name);
       removedEdges++;
     }
   }
-
+ 
   free(origEdges);
-  
-  fprintf(stdout, "Naprawa zakończona. Usunięto %d krawędzi.\n", removedEdges);
+ 
+  fprintf(stderr, "Ostrzeżenie: Naprawa zakończona. Usunięto %d krawędzi.\n", removedEdges);
   return removedEdges;
 }

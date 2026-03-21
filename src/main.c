@@ -109,26 +109,13 @@ int main(int argc, char *argv[]) {
     return -1;
   }
 
-  printf("========================================\n");
-  if (isGraphPlanar(&graph)) {
-      printf("[TEST] Graf wejściowy JEST planarny.\n");
-  } else {
-      int removed = makeGraphPlanar(&graph);
-      if (removed == -1) {
-        fprintf(stderr, "Błąd! Nie można zaalokować pamięci podczas naprawy planarności!\n");
-        freeGraph(&graph);
-        return -1;
-      } else if (removed > 0) {
-        fprintf(stderr, "Ostrzeżenie: Usunięto %d krawędzi aby zapewnić planarność grafu.\n", removed);
-      }
-      
-      if (isGraphPlanar(&graph)) {
-          printf("[TEST] Sukces! Graf po przetworzeniu JEST planarny.\n");
-      } else {
-          printf("[TEST] UWAGA BŁĄD! Graf po naprawie wciąż NIE JEST planarny!\n");
-      }
+  int removed = makeGraphPlanar(&graph);
+  if (removed == -1) {
+    fprintf(stderr, "Błąd! Nie można zaalokować pamięci podczas naprawy planarności!\n");
+    freeGraph(&graph);
+    fclose(in_file);
+    return -1;
   }
-  printf("========================================\n\n");
 
   int connected = ensureConnectivity(&graph);
   if(connected == -1){
