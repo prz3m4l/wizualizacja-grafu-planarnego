@@ -8,12 +8,6 @@
 #include <stdio.h>
 #include <string.h>
 
-typedef struct {
-  char **names;
-  int count;
-  int capacity;
-} VertexList;
-
 /* Zapisuje wyniki algorytmów do pliku wyjściowego */
 void saveResults(FILE *outputFiles, Graph *graf, bool isBinary);
 

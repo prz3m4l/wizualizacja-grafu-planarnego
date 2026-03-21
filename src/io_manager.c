@@ -37,6 +37,13 @@ double toBigEndianDouble(double val) {
   return result;
 }
 
+typedef struct {
+  char **names;
+  int count;
+  int capacity;
+} VertexList;
+
+
 int initVertexList(VertexList *list) {
   list->count = 0;
   list->capacity = 10;
