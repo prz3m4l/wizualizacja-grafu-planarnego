@@ -494,6 +494,7 @@ bool isGraphPlanar(Graph *graph) {
         getAllFragments(graph, vertex_drawn, edge_drawn, edge_visited, visit_id, &fragments_count);
 
     if (fragments_count == 0) {
+      free(fragments);
       break;
     }
 

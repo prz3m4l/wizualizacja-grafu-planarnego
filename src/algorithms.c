@@ -167,7 +167,7 @@ void kamadaKawaiLayout(Graph *graph, int width, int height, int iterations){
     if(springs[i] == NULL){
       fprintf(stderr, "Błąd! Brak pamięci na wiersz macierzy sprężyn!\n");
       for(int j = i - 1; j >= 0; j--){
-        free(springs[i]);
+        free(springs[j]);
       }
       free(springs);
       for(int j = 0; j<graph->vertices_n; j++){
@@ -183,6 +183,13 @@ void kamadaKawaiLayout(Graph *graph, int width, int height, int iterations){
         springs[i][j].length = springs[i][j].stiffness = 0.0;
         continue;
       }
+
+      if (distances[i][j] <= 0) {
+        springs[i][j].length = 0.0;
+        springs[i][j].stiffness = 0.0;
+        continue;
+      }
+
       springs[i][j].length = idealLengthOfSingleEdge * distances[i][j];
       springs[i][j].stiffness = K/(distances[i][j]*distances[i][j]);
     }

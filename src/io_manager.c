@@ -43,10 +43,15 @@ typedef struct {
   int capacity;
 } VertexList;
 
-void initVertexList(VertexList *list) {
+int initVertexList(VertexList *list) {
   list->count = 0;
   list->capacity = 10;
   list->names = malloc(list->capacity * sizeof(char *));
+  if (list->names == NULL) {
+    fprintf(stderr, "Błąd! Nie można zaalokować pamięci przy tworzeniu listy wierzchołków!\n");
+    return -1;
+  }
+  return 0;
 }
 
 // Dodaje nazwę tylko jeśli jej jeszcze nie ma
@@ -170,15 +175,15 @@ static int readEdges(FILE *inputFile, Edge **edges_out, int *count_out, VertexLi
   return 0;
 }
 
-static int allocateGraph(Graph *graph, int v_count, int e_count) {
-  graph->vertices_n = v_count;
-  graph->edges_n = e_count;
+static int allocateGraph(Graph *graph, int vCount, int eCount) {
+  graph->vertices_n = vCount;
+  graph->edges_n = eCount;
   
-  graph->vertices = calloc(v_count, sizeof(Node));
-  graph->x = malloc(v_count * sizeof(double));
-  graph->y = malloc(v_count * sizeof(double));
-  graph->dx = calloc(v_count, sizeof(double));
-  graph->dy = calloc(v_count, sizeof(double));
+  graph->vertices = calloc(vCount, sizeof(Node));
+  graph->x = malloc(vCount * sizeof(double));
+  graph->y = malloc(vCount * sizeof(double));
+  graph->dx = calloc(vCount, sizeof(double));
+  graph->dy = calloc(vCount, sizeof(double));
 
   if (!graph->vertices || !graph->x || !graph->y || !graph->dx || !graph->dy) {
     fprintf(stderr, "Błąd! Nie można zaalokować pamięci dla współrzędnych i wierzchołków!\n");
@@ -190,25 +195,27 @@ static int allocateGraph(Graph *graph, int v_count, int e_count) {
 
 int loadGraph(FILE *inputFile, Graph *graph, int width, int height) {
   VertexList vList;
-  initVertexList(&vList);
-  Edge *temp_edges = NULL;
-  int edges_count = 0;
+  if (initVertexList(&vList) != 0) {
+    return -1; 
+  }
+  Edge *tempEdges = NULL;
+  int edgesCount = 0;
 
-  if (readEdges(inputFile, &temp_edges, &edges_count, &vList) != 0) {
+  if (readEdges(inputFile, &tempEdges, &edgesCount, &vList) != 0) {
     cleanupVertexList(&vList);
     return -1;
   }
 
-  if (allocateGraph(graph, vList.count, edges_count) != 0) {
-    for(int i = 0; i<edges_count; i++){
-      free(temp_edges[i].name);
+  if (allocateGraph(graph, vList.count, edgesCount) != 0) {
+    for(int i = 0; i<edgesCount; i++){
+      free(tempEdges[i].name);
     }
-    free(temp_edges);
+    free(tempEdges);
     cleanupVertexList(&vList);
     return -1;
   }
-  graph->edges = temp_edges;
-  for (int i = 0; i < edges_count; i++) {
+  graph->edges = tempEdges;
+  for (int i = 0; i < edgesCount; i++) {
     addVertex(graph->vertices, graph->edges[i].idA, graph->edges[i].idB);
     addVertex(graph->vertices, graph->edges[i].idB, graph->edges[i].idA);
   }
@@ -247,6 +254,10 @@ void freeGraph(Graph *graph) {
   free(graph->y);
   free(graph->dx);
   free(graph->dy);
+  graph->x=NULL;
+  graph->y=NULL;
+  graph->dx=NULL;
+  graph->dy=NULL;
 }
 
 void saveResults(FILE *outputFile, Graph *graph, bool isBinary) {
