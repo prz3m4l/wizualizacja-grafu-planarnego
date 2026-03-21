@@ -128,7 +128,7 @@ int main(int argc, char *argv[]) {
   if (removed == -1) {
     fprintf(stderr, "Błąd! Nie można zaalokować pamięci podczas naprawy planarności!\n");
     freeGraph(&graph);
-    fclose(in_file);
+    fclose(inFile);
     return -1;
   }
 
@@ -141,12 +141,12 @@ int main(int argc, char *argv[]) {
   }else if(connected == 0){
     fprintf(stderr, "Ostrzeżenie: Graf był niespójny! Automatycznie dodano brakujące krawędzie.\n");
   }
-  fclose(in_file);
+  fclose(inFile);
   
-  if (algorithm_name == NULL || (strcmp(algorithm_name, "fruchterman") == 0)) {
-    fruchterman_reingold(&graph, iter, width, height);
-  } else if (strcmp(algorithm_name, "kamada") == 0) {
-    kamada_kawai_layout(&graph, width, height, iter);
+  if (algorithmName == NULL || (strcmp(algorithmName, "fruchterman") == 0)) {
+    fruchtermanReingold(&graph, iter, width, height);
+  } else if (strcmp(algorithmName, "kamada") == 0) {
+    kamadaKawaiLayout(&graph, width, height, iter);
   } else {
     fprintf(stderr, "Błąd! Podana nazwa algorytmu jest nieprawidłowa!\n");
     freeGraph(&graph);
