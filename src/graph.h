@@ -1,9 +1,9 @@
 #ifndef GRAPH_H
 #define GRAPH_H
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
 #include <string.h>
 
 /* Węzeł listy sąsiedztwa reprezentujący jeden wierzchołek grafu */
@@ -45,5 +45,9 @@ int addVertex(Node *adjList, int v, int u);
    Zwraca 1 jeśli graf był spójny, 0 jeśli dokonano naprawy,
    -1 przy błędzie alokacji pamięci. */
 int ensureConnectivity(Graph *graph);
+
+bool isGraphPlanar(Graph *graph);
+
+int makeGraphPlanar(Graph *graph);
 
 #endif
