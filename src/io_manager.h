@@ -18,12 +18,12 @@ int loadGraph(FILE *inputFiles, Graph *graf, int width, int height);
 void freeGraph(Graph *graf);
 
 /* Sprawdza czy procesor jest Little-Endian */
-int is_little_endian(void);
+int isLittleEndian(void);
 
 /* Zamienia bajty w int na Big-Endian, kiedy to potrzebne */
-uint32_t to_big_endian_int32(uint32_t val);
+uint32_t toBigEndianUint32(uint32_t val);
 
 /* Zamienia bajty w double na Big-Endian, kiedy to potrzebne */
-double to_big_endian_double(double val);
+double toBigEndianDouble(double val);
 
 #endif

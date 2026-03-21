@@ -14,32 +14,32 @@
 #define MAX_ITER 100000
 
 int main(int argc, char *argv[]) {
-  srand(time(NULL));
   int opt = 0;
   int width = 1000;
   int height = 1000;
   int iter = 100;
   bool isBinary = false;
   bool isText = false;
-  char *input_file = NULL;
-  char *output_file = NULL;
-  char *algorithm_name = NULL;
-  char *endptr = NULL;
+  char *inputFile = NULL;
+  char *outputFile = NULL;
+  char *algorithmName = NULL;
+  char *endPtr = NULL;
+  int seed = 0;
   long parsedValue = 0;
 
-  while ((opt = getopt(argc, argv, "i:o:w:h:t:a:b:")) != -1) {
+  while ((opt = getopt(argc, argv, "i:o:w:h:t:a:b:s:")) != -1) {
     switch (opt) {
     case 'i':
-      input_file = optarg;
+      inputFile = optarg;
       break;
     case 'o':
       isText = true;
-      output_file = optarg;
+      outputFile = optarg;
       break;
     case 'w':
       errno = 0;
-      parsedValue = strtol(optarg, &endptr, 10);
-      if (errno != 0 || *endptr != '\0') {
+      parsedValue = strtol(optarg, &endPtr, 10);
+      if (errno != 0 || *endPtr != '\0') {
         fprintf(stderr, "Błąd! Nieprawidłowa wartość dla -w: %s!\n", optarg);
         return -1;
       }
@@ -47,8 +47,8 @@ int main(int argc, char *argv[]) {
       break;
     case 'h':
       errno = 0;
-      parsedValue = strtol(optarg, &endptr, 10);
-      if (errno != 0 || *endptr != '\0') {
+      parsedValue = strtol(optarg, &endPtr, 10);
+      if (errno != 0 || *endPtr != '\0') {
         fprintf(stderr, "Błąd! Nieprawidłowa wartość dla -h: %s!\n", optarg);
         return -1;
       }
@@ -56,24 +56,39 @@ int main(int argc, char *argv[]) {
       break;
     case 't':
       errno = 0;
-      parsedValue = strtol(optarg, &endptr, 10);
-      if (errno != 0 || *endptr != '\0') {
+      parsedValue = strtol(optarg, &endPtr, 10);
+      if (errno != 0 || *endPtr != '\0') {
         fprintf(stderr, "Błąd! Nieprawidłowa wartość dla -t: %s!\n", optarg);
         return -1;
       }
       iter = (int)parsedValue;
       break;
     case 'a':
-      algorithm_name = optarg;
+      algorithmName = optarg;
       break;
     case 'b':
       isBinary = true;
-      output_file = optarg;
+      outputFile = optarg;
+      break;
+    case 's':
+      errno = 0;
+      parsedValue = strtol(optarg, &endPtr, 10);
+      if (errno != 0 || *endPtr != '\0') {
+        fprintf(stderr, "Błąd! Nieprawidłowa wartość dla -s: %s!\n", optarg);
+        return -1;
+      }
+      seed = (int)parsedValue;
       break;
     case '?':
       fprintf(stderr, "Błąd! Nieznana flaga lub brak argumentu do opcji!\n");
       return -1;
     }
+  }
+
+  if (seed == 0) {
+    srand(time(NULL));
+  } else {
+    srand(seed);
   }
 
   if (width <= 0 || width > MAX_WIDTH || height <= 0 || height > MAX_HEIGHT ||
@@ -83,7 +98,7 @@ int main(int argc, char *argv[]) {
     return -1;
   }
 
-  if (input_file == NULL || output_file == NULL) {
+  if (inputFile == NULL || outputFile == NULL) {
     fprintf(stderr, "Błąd! Nie podano pliku wejściowego lub wyjściowego!\n");
     return -1;
   }
@@ -94,8 +109,8 @@ int main(int argc, char *argv[]) {
     return -1;
   }
 
-  FILE *in_file = fopen(input_file, "r");
-  if (in_file == NULL) {
+  FILE *inFile = fopen(inputFile, "r");
+  if (inFile == NULL) {
     fprintf(stderr, "Błąd! Nie można otworzyć pliku wejściowego!\n");
     return -1;
   }
@@ -103,9 +118,9 @@ int main(int argc, char *argv[]) {
   /* wczytywanie grafu */
   Graph graph = {
       0}; /* zabezpiecznie przed segmentation fault w cleanupOnError */
-  if (loadGraph(in_file, &graph, width, height) != 0) {
+  if (loadGraph(inFile, &graph, width, height) != 0) {
     fprintf(stderr, "Błąd! Nie można wczytać grafu z pliku!\n");
-    fclose(in_file);
+    fclose(inFile);
     return -1;
   }
 
@@ -120,12 +135,14 @@ int main(int argc, char *argv[]) {
   int connected = ensureConnectivity(&graph);
   if(connected == -1){
     fprintf(stderr, "Błąd! Nie można zaalokować pamięci dla tablicy odwiedzonych wierzchołków!\n");
+    fclose(inFile);
     freeGraph(&graph);
     return -1;
   }else if(connected == 0){
     fprintf(stderr, "Ostrzeżenie: Graf był niespójny! Automatycznie dodano brakujące krawędzie.\n");
   }
   fclose(in_file);
+  
   if (algorithm_name == NULL || (strcmp(algorithm_name, "fruchterman") == 0)) {
     fruchterman_reingold(&graph, iter, width, height);
   } else if (strcmp(algorithm_name, "kamada") == 0) {
@@ -136,22 +153,21 @@ int main(int argc, char *argv[]) {
     return -1;
   }
 
-  FILE *out_file = NULL;
+  FILE *outFile = NULL;
   if (isBinary == false) {
-    out_file = fopen(output_file, "w");
+    outFile = fopen(outputFile, "w");
   } else {
-    out_file = fopen(output_file, "wb");
+    outFile = fopen(outputFile, "wb");
   }
-  if (out_file == NULL) {
+  if (outFile == NULL) {
     fprintf(stderr, "Błąd! Nie można otworzyć pliku wyjściowego do zapisu!\n");
     freeGraph(&graph); /* zwolnienie pamięci przed wyrzuceniem błędu */
     return -1;
   }
 
-  saveResults(out_file, &graph, isBinary);
-  fclose(out_file);
+  saveResults(outFile, &graph, isBinary);
+  fclose(outFile);
 
-  freeGraph(
-      &graph); /* zwolnienie pamięci zaalokowanej na wierzchołki i sąsiadów */
+  freeGraph(&graph); /* zwolnienie pamięci zaalokowanej na wierzchołki i sąsiadów */
   return 0;
 }

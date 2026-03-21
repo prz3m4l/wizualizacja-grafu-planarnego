@@ -628,6 +628,7 @@ int ensureConnectivity(Graph *graph) {
 
 int makeGraphPlanar(Graph *graph) {
   if (isGraphPlanar(graph)) {
+  if (repaired) {
     return 0;
   }
  
