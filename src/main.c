@@ -79,6 +79,7 @@ int main(int argc, char *argv[]) {
         return -1;
       }
       seed = (int)parsedValue;
+      isSeedSet = true;
       break;
     case '?':
       fprintf(stderr, "Błąd! Nieznana flaga lub brak argumentu do opcji!\n");

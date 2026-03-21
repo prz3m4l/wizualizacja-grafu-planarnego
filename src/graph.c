@@ -66,24 +66,6 @@ static bool dfsFindCycle(const Graph *graph, int current_vertex,
   return false;
 }
 
-typedef struct {
-  int *vertices;
-  int vertices_count;
-
-  int *contact_points;
-  int contact_count;
-  bool *in_fragment;
-  bool *is_contact;
-
-  int *admissible_faces;
-  int admissible_count;
-} Fragment;
-
-typedef struct {
-  int *boundary_vertices;
-  int boundary_count;
-} Face;
-
 static int getNeighbourIndex(const Graph *graph, int u, int v) {
   for (int i = 0; i < graph->vertices[u].count; i++) {
     if (graph->vertices[u].neighbours[i] == v) return i;

@@ -37,6 +37,24 @@ typedef struct Graph {
   double *dy;         /* składowe y sił działających na wierzchołki */
 } Graph;
 
+typedef struct {
+  int *vertices;
+  int vertices_count;
+
+  int *contact_points;
+  int contact_count;
+  bool *in_fragment;
+  bool *is_contact;
+
+  int *admissible_faces;
+  int admissible_count;
+} Fragment;
+
+typedef struct {
+  int *boundary_vertices;
+  int boundary_count;
+} Face;
+
 /* Dodaje wierzchołek u do listy sąsiedztwa wierzchołka v.
    Zwraca 0 przy sukcesie, -1 przy błędzie alokacji pamięci. */
 int addVertex(Node *adjList, int v, int u);
@@ -49,5 +67,7 @@ int ensureConnectivity(Graph *graph);
 bool isGraphPlanar(Graph *graph);
 
 int makeGraphPlanar(Graph *graph);
+
+void freeFragments(Fragment *fragments, int count);
 
 #endif
