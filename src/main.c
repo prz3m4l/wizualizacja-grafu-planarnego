@@ -20,6 +20,7 @@ int main(int argc, char *argv[]) {
   int iter = 100;
   bool isBinary = false;
   bool isText = false;
+  bool isSeedSet = false;
   char *inputFile = NULL;
   char *outputFile = NULL;
   char *algorithmName = NULL;
@@ -85,10 +86,10 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  if (seed == 0) {
-    srand(time(NULL));
-  } else {
+  if (isSeedSet) {
     srand(seed);
+  } else {
+    srand(time(NULL));
   }
 
   if (width <= 0 || width > MAX_WIDTH || height <= 0 || height > MAX_HEIGHT ||
