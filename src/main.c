@@ -141,11 +141,11 @@ int main(int argc, char *argv[]) {
   }else if(connected == 0){
     fprintf(stderr, "Ostrzeżenie: Graf był niespójny! Automatycznie dodano brakujące krawędzie.\n");
   }
-
   fclose(inFile);
+  
   if (algorithmName == NULL || (strcmp(algorithmName, "fruchterman") == 0)) {
     fruchtermanReingold(&graph, iter, width, height);
-  } else if(strcmp(algorithmName, "kamada") == 0){ 
+  } else if (strcmp(algorithmName, "kamada") == 0) {
     kamadaKawaiLayout(&graph, width, height, iter);
   } else {
     fprintf(stderr, "Błąd! Podana nazwa algorytmu jest nieprawidłowa!\n");
