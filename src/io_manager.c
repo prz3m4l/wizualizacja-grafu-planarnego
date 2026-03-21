@@ -37,12 +37,6 @@ double toBigEndianDouble(double val) {
   return result;
 }
 
-typedef struct {
-  char **names;
-  int count;
-  int capacity;
-} VertexList;
-
 int initVertexList(VertexList *list) {
   list->count = 0;
   list->capacity = 10;
@@ -178,6 +172,11 @@ static int readEdges(FILE *inputFile, Edge **edges_out, int *count_out, VertexLi
 static int allocateGraph(Graph *graph, int vCount, int eCount) {
   graph->vertices_n = vCount;
   graph->edges_n = eCount;
+  graph->edges = NULL;
+  graph->x = NULL;
+  graph->y = NULL;
+  graph->dx = NULL;
+  graph->dy = NULL;
   
   graph->vertices = calloc(vCount, sizeof(Node));
   graph->x = malloc(vCount * sizeof(double));
