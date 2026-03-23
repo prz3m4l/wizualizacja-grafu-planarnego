@@ -1,0 +1,17 @@
+#ifndef FR_ALGORITHM_H
+#define FR_ALGORITHM_H
+
+/* Minimalna odległość między wierzchołkami — ochrona przed dzieleniem przez 0 */
+#define MIN_DIST 0.01
+
+/* Współczynnik chłodzenia temperatury w algorytmie Fruchtermana-Reingolda */
+#define TEMP_FACTOR 0.95
+
+#include "graph.h"
+#include <math.h>
+#include <stdlib.h>
+
+/* Algorytm Fruchtermana-Reingolda do rysowania grafów planarnych */
+void fruchtermanReingold(Graph *g, int iterations, double width, double height);
+
+#endif

@@ -1,5 +1,7 @@
-#include "algorithms.h"
+#include "fr_algorithm.h"
+#include "kk_algorithm.h"
 #include "graph.h"
+#include "planarity.h"
 #include "io_manager.h"
 #include <errno.h>
 #include <stdbool.h>
