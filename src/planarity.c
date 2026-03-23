@@ -204,6 +204,11 @@ static Fragment *getAllFragments(const Graph *graph, bool *vertex_drawn,
   Fragment *fragments = malloc(max_frags * sizeof(Fragment));
   *fragments_count = 0;
 
+  if (!fragments) {
+    fprintf(stderr, "Błąd! Brak pamięci na tablicę fragmentów!\n");
+    return NULL;
+  }
+
   for (int u = 0; u < V; u++) {
     for (int i = 0; i < graph->vertices[u].count; i++) {
       int v = graph->vertices[u].neighbours[i];
@@ -214,11 +219,17 @@ static Fragment *getAllFragments(const Graph *graph, bool *vertex_drawn,
         Fragment *frag = &fragments[*fragments_count];
 
         frag->vertices = malloc(V * sizeof(int));
-        frag->vertices_count = 0;
         frag->contact_points = malloc(V * sizeof(int));
-        frag->contact_count = 0;
         frag->in_fragment = calloc(V, sizeof(bool));
         frag->is_contact = calloc(V, sizeof(bool));
+
+        if (!fragments) {
+          fprintf(stderr, "Błąd! Brak pamięci na tablicę fragmentów!\n");
+          return NULL;
+        }
+
+        frag->vertices_count = 0;
+        frag->contact_count = 0;
         frag->admissible_faces = NULL;
         frag->admissible_count = 0;
 
@@ -229,7 +240,10 @@ static Fragment *getAllFragments(const Graph *graph, bool *vertex_drawn,
           frag->is_contact[v] = true;
 
           edge_visited[u][i] = visit_id;
-          edge_visited[v][getNeighbourIndex(graph, v, u)] = visit_id;
+          int idx_v = getNeighbourIndex(graph, v, u);
+          if (idx_v != -1) {
+            edge_visited[v][idx_v] = visit_id;
+          }
         } else {
           int start_node = vertex_drawn[u] ? v : u;
 
@@ -310,6 +324,13 @@ static int *findPathBetweenContacts(const Graph *graph, Fragment *frag,
   int *temp_path = malloc(graph->vertices_n * sizeof(int));
   int *final_path = NULL;
   *path_length = 0;
+
+  if (!visited || !temp_path) {
+      free(visited);
+      free(temp_path);
+      *path_length = 0;
+      return NULL;
+  }
 
   int start_node = frag->contact_points[0];
 
@@ -412,6 +433,14 @@ bool isGraphPlanar(Graph *graph) {
   bool *visited = calloc(V, sizeof(bool));
   int cycle_length = 0;
 
+  if (!parents || !cycles || !visited) {
+      free(parents); 
+      free(cycles); 
+      free(visited);
+      fprintf(stderr, "Błąd! Brak pamięci podczas sprawdzania planarności grafu!\n");
+      return false;
+  }
+
   bool has_cycle = false;
   for (int i = 0; i < V; i++) {
     if (!visited[i]) {
@@ -434,11 +463,52 @@ bool isGraphPlanar(Graph *graph) {
   Face *faces =
       initDmpFaces(cycles, cycle_length, V, &vertex_drawn, &faces_count);
 
+  if (faces == NULL) {
+    free(parents);
+    free(cycles);
+    free(visited);
+    fprintf(stderr, "Błąd! Brak pamięci na inicjalizację ścian (DMP)!\n");
+    return false;
+  }
+
   bool **edge_drawn = malloc(V * sizeof(bool *));
   int **edge_visited = malloc(V * sizeof(int *));
+  if (!edge_drawn || !edge_visited) {
+    free(parents);
+    free(cycles);
+    free(visited);
+    free(vertex_drawn);
+    for (int k = 0; k < faces_count; k++) {
+        free(faces[k].boundary_vertices);
+    }
+    free(faces);
+    free(edge_drawn);
+    free(edge_visited);
+    fprintf(stderr, "Błąd! Brak pamięci na macierze krawędzi!\n");
+    return false;
+  }
   for (int i = 0; i < V; i++) {
     edge_drawn[i] = calloc(graph->vertices[i].count, sizeof(bool));
     edge_visited[i] = calloc(graph->vertices[i].count, sizeof(int));
+
+    if (!edge_drawn[i] || !edge_visited[i]) {
+      for (int j = 0; j <= i; j++) {
+        free(edge_drawn[j]);
+        free(edge_visited[j]);
+      }
+      free(edge_drawn);
+      free(edge_visited);
+      free(parents);
+      free(cycles);
+      free(visited);
+      free(vertex_drawn);
+      for (int k = 0; k < faces_count; k++) {
+        free(faces[k].boundary_vertices);
+      }
+      free(faces);
+      fprintf(stderr, "Błąd! Brak pamięci na wiersze macierzy krawędzi!\n");
+      return false;
+    }
   }
   int visit_id = 0;
 
@@ -591,8 +661,15 @@ int makeGraphPlanar(Graph *graph) {
  
     graph->edges[graph->edges_n] = currentEdge;
     graph->edges_n++;
-    addVertex(graph->vertices, currentEdge.idA, currentEdge.idB);
-    addVertex(graph->vertices, currentEdge.idB, currentEdge.idA);
+    if (addVertex(graph->vertices, currentEdge.idA, currentEdge.idB) == -1 ||
+        addVertex(graph->vertices, currentEdge.idB, currentEdge.idA) == -1) {
+        fprintf(stderr, "Błąd! Nie można zaalokować pamięci przy tworzeniu krawędzi w makeGraphPlanar!\n");
+        for (int k = i + 1; k < origEdgesCount; k++) {
+            free(origEdges[k].name);
+        }
+        free(origEdges);
+        return -1; 
+    }
  
     if (!isGraphPlanar(graph)) {
       graph->edges_n--;
