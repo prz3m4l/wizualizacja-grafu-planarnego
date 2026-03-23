@@ -1,4 +1,7 @@
 #include "planarity.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 typedef struct {
   int *boundary_vertices;
@@ -17,6 +20,19 @@ typedef struct {
   int *admissible_faces;
   int admissible_count;
 } Fragment;
+
+static void freeFragments(Fragment *fragments, int count) {
+  if (fragments == NULL)
+    return;
+  for (int i = 0; i < count; i++) {
+    free(fragments[i].vertices);
+    free(fragments[i].contact_points);
+    free(fragments[i].in_fragment);
+    free(fragments[i].is_contact);
+    free(fragments[i].admissible_faces);
+  }
+  free(fragments);
+}
 
 static bool dfsFindCycle(const Graph *graph, int current_vertex,
                          int parent_vertex, int *parents, int *cycles,
@@ -64,6 +80,10 @@ static bool checkFragmentPlanarity(const Graph *graph, Fragment *f) {
     return true;
 
   int *orig_to_sub = malloc(graph->vertices_n * sizeof(int));
+  if (orig_to_sub == NULL) {
+    fprintf(stderr, "Błąd! Nie można zaalokować pamięci dla orig_to_sub!\n");
+    return false;
+  }
   for (int i = 0; i < graph->vertices_n; i++)
     orig_to_sub[i] = -1;
 
@@ -78,8 +98,11 @@ static bool checkFragmentPlanarity(const Graph *graph, Fragment *f) {
   Graph sub = {0};
   sub.vertices_n = sub_V;
   sub.vertices = calloc(sub_V, sizeof(Node));
-  for (int i = 0; i < sub_V; i++)
-    sub.vertices[i].v = i;
+  if (sub.vertices == NULL) {
+    fprintf(stderr, "Błąd! Nie można zaalokować pamięci dla sub.vertices!\n");
+    free(orig_to_sub);
+    return false;
+  }
 
   for (int i = 0; i < f->vertices_count; i++) {
     int u = f->vertices[i];
@@ -113,8 +136,10 @@ static bool checkFragmentPlanarity(const Graph *graph, Fragment *f) {
 static Face *initDmpFaces(int *cycle, int cycle_length, int vertices_num,
                    bool **vertex_drawn_out, int *faces_count_out) {
   bool *vertex_drawn = (bool *)calloc(vertices_num, sizeof(bool));
-  if (vertex_drawn == NULL)
+  if (vertex_drawn == NULL) {
+    fprintf(stderr, "Błąd! Nie można zaalokować pamięci w initDmpFaces!\n");
     return NULL;
+  }
 
   for (int i = 0; i < cycle_length; i++) {
     vertex_drawn[cycle[i]] = true;
@@ -124,17 +149,31 @@ static Face *initDmpFaces(int *cycle, int cycle_length, int vertices_num,
   int max_faces = 2 * vertices_num;
   Face *faces = malloc(max_faces * sizeof(Face));
   if (faces == NULL) {
+    fprintf(stderr, "Błąd! Nie można zaalokować pamięci w initDmpFaces dla faces!\n");
     free(vertex_drawn);
     return NULL;
   }
 
   faces[0].boundary_count = cycle_length;
   faces[0].boundary_vertices = malloc(cycle_length * sizeof(int));
+  if (faces[0].boundary_vertices == NULL) {
+    fprintf(stderr, "Błąd! Nie można zaalokować pamięci w initDmpFaces!\n");
+    free(faces);
+    free(vertex_drawn);
+    return NULL;
+  }
   for (int i = 0; i < cycle_length; i++)
     faces[0].boundary_vertices[i] = cycle[i];
 
   faces[1].boundary_count = cycle_length;
   faces[1].boundary_vertices = malloc(cycle_length * sizeof(int));
+  if (faces[1].boundary_vertices == NULL) {
+    fprintf(stderr, "Błąd! Nie można zaalokować pamięci w initDmpFaces!\n");
+    free(faces[0].boundary_vertices);
+    free(faces);
+    free(vertex_drawn);
+    return NULL;
+  }
   for (int i = 0; i < cycle_length; i++)
     faces[1].boundary_vertices[i] = cycle[i];
 
@@ -150,8 +189,12 @@ static bool isVertexOnFace(int v, const Face *face) {
   return false;
 }
 
-static void findAdmissibleFaces(Fragment *frag, const Face *faces, int faces_count) {
+static bool findAdmissibleFaces(Fragment *frag, const Face *faces, int faces_count) {
   frag->admissible_faces = (int *)malloc(faces_count * sizeof(int));
+  if (frag->admissible_faces == NULL) {
+    fprintf(stderr, "Błąd! Nie można zaalokować pamięci w findAdmissibleFaces!\n");
+    return false;
+  }
   frag->admissible_count = 0;
 
   for (int i = 0; i < faces_count; i++) {
@@ -166,6 +209,7 @@ static void findAdmissibleFaces(Fragment *frag, const Face *faces, int faces_cou
       frag->admissible_faces[frag->admissible_count++] = i;
     }
   }
+  return true;
 }
 
 static void dfsBuildFragment(const Graph *graph, int u, bool *vertex_drawn,
@@ -223,8 +267,14 @@ static Fragment *getAllFragments(const Graph *graph, bool *vertex_drawn,
         frag->in_fragment = calloc(V, sizeof(bool));
         frag->is_contact = calloc(V, sizeof(bool));
 
-        if (!fragments) {
-          fprintf(stderr, "Błąd! Brak pamięci na tablicę fragmentów!\n");
+        if (!frag->vertices || !frag->contact_points || !frag->in_fragment || !frag->is_contact) {
+          fprintf(stderr, "Błąd! Brak pamięci na struktury fragmentu!\n");
+          if (frag->vertices) free(frag->vertices);
+          if (frag->contact_points) free(frag->contact_points);
+          if (frag->in_fragment) free(frag->in_fragment);
+          if (frag->is_contact) free(frag->is_contact);
+          freeFragments(fragments, *fragments_count);
+          free(fragments);
           return NULL;
         }
 
@@ -282,6 +332,10 @@ static bool dfsFindPath(const Graph *graph, int current, int start_node,
   if (frag->is_contact[current] && current != start_node) {
     *out_length = depth + 1;
     *out_path = malloc((*out_length) * sizeof(int));
+    if (*out_path == NULL) {
+      fprintf(stderr, "Błąd! Nie można zaalokować pamięci w dfsFindPath!\n");
+      return false;
+    }
     for (int i = 0; i < *out_length; i++) {
       (*out_path)[i] = temp_path[i];
     }
@@ -310,6 +364,10 @@ static int *findPathBetweenContacts(const Graph *graph, Fragment *frag,
   if (frag->vertices_count == 0 && frag->contact_count == 2) {
     *path_length = 2;
     int *path = malloc(2 * sizeof(int));
+    if (path == NULL) {
+      fprintf(stderr, "Błąd! Nie można zaalokować pamięci w findPathBetweenContacts!\n");
+      return NULL;
+    }
     path[0] = frag->contact_points[0];
     path[1] = frag->contact_points[1];
     return path;
@@ -326,6 +384,7 @@ static int *findPathBetweenContacts(const Graph *graph, Fragment *frag,
   *path_length = 0;
 
   if (!visited || !temp_path) {
+      fprintf(stderr, "Błąd! Nie można zaalokować pamięci dla dfs w findPathBetweenContacts!\n");
       free(visited);
       free(temp_path);
       *path_length = 0;
@@ -342,7 +401,7 @@ static int *findPathBetweenContacts(const Graph *graph, Fragment *frag,
   return final_path;
 }
 
-static void embedPathAndSplitFace(Face **faces_ptr, int *faces_count,
+static bool embedPathAndSplitFace(Face **faces_ptr, int *faces_count,
                            int target_face_idx, int *path, int path_length,
                            bool *vertex_drawn, bool **edge_drawn, const Graph *graph) {
   Face *faces = *faces_ptr;
@@ -363,6 +422,10 @@ static void embedPathAndSplitFace(Face **faces_ptr, int *faces_count,
 
   int new_face1_count = arc1_len + path_length - 2;
   int *new_boundary1 = malloc(new_face1_count * sizeof(int));
+  if (new_boundary1 == NULL) {
+    fprintf(stderr, "Błąd! Nie można zaalokować pamięci w embedPathAndSplitFace!\n");
+    return false;
+  }
   int c1 = 0;
   for (int i = 0; i < arc1_len; i++) {
     new_boundary1[c1++] =
@@ -374,6 +437,11 @@ static void embedPathAndSplitFace(Face **faces_ptr, int *faces_count,
 
   int new_face2_count = arc2_len + path_length - 2;
   int *new_boundary2 = malloc(new_face2_count * sizeof(int));
+  if (new_boundary2 == NULL) {
+    fprintf(stderr, "Błąd! Nie można zaalokować pamięci w embedPathAndSplitFace!\n");
+    free(new_boundary1);
+    return false;
+  }
   int c2 = 0;
   for (int i = 0; i < arc2_len; i++) {
     new_boundary2[c2++] =
@@ -403,19 +471,7 @@ static void embedPathAndSplitFace(Face **faces_ptr, int *faces_count,
     int idx_v = getNeighbourIndex(graph, v, u);
     if (idx_v != -1) edge_drawn[v][idx_v] = true;
   }
-}
-
-static void freeFragments(Fragment *fragments, int count) {
-  if (fragments == NULL)
-    return;
-  for (int i = 0; i < count; i++) {
-    free(fragments[i].vertices);
-    free(fragments[i].contact_points);
-    free(fragments[i].in_fragment);
-    free(fragments[i].is_contact);
-    free(fragments[i].admissible_faces);
-  }
-  free(fragments);
+  return true;
 }
 
 bool isGraphPlanar(Graph *graph) {
@@ -434,10 +490,10 @@ bool isGraphPlanar(Graph *graph) {
   int cycle_length = 0;
 
   if (!parents || !cycles || !visited) {
-      free(parents); 
-      free(cycles); 
+      fprintf(stderr, "Błąd! Nie można zaalokować pamięci w isGraphPlanar!\n");
+      free(parents);
+      free(cycles);
       free(visited);
-      fprintf(stderr, "Błąd! Brak pamięci podczas sprawdzania planarności grafu!\n");
       return false;
   }
 
@@ -539,7 +595,10 @@ bool isGraphPlanar(Graph *graph) {
     int target_face_idx = -1;
 
     for (int i = 0; i < fragments_count; i++) {
-      findAdmissibleFaces(&fragments[i], faces, faces_count);
+      if (!findAdmissibleFaces(&fragments[i], faces, faces_count)) {
+        is_planar = false;
+        break;
+      }
 
       if (fragments[i].admissible_count == 0) {
         is_planar = false;
@@ -596,8 +655,13 @@ bool isGraphPlanar(Graph *graph) {
       continue;
     }
 
-    embedPathAndSplitFace(&faces, &faces_count, target_face_idx, path,
-                          path_length, vertex_drawn, edge_drawn, graph);
+    if (!embedPathAndSplitFace(&faces, &faces_count, target_face_idx, path,
+                          path_length, vertex_drawn, edge_drawn, graph)) {
+      is_planar = false;
+      free(path);
+      freeFragments(fragments, fragments_count);
+      break;
+    }
 
     free(path);
     freeFragments(fragments, fragments_count);
@@ -634,6 +698,7 @@ int makeGraphPlanar(Graph *graph) {
   graph->edges = malloc(origEdgesCount * sizeof(Edge));
   if (graph->edges == NULL) {
     fprintf(stderr, "Błąd! Nie można zaalokować pamięci podczas naprawy planarności!\n");
+    graph->edges = origEdges;
     return -1;
   }
   graph->edges_n = 0;

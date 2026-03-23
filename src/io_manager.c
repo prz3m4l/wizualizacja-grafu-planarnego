@@ -156,7 +156,6 @@ static int readEdges(FILE *inputFile, Edge **edges_out, int *count_out, VertexLi
     edges[count].idA = idA;
     edges[count].idB = idB;
     edges[count].name = strdup(tempName);
-    edges[count].weight = weight;
     count++;
   }
 
@@ -229,7 +228,6 @@ int loadGraph(FILE *inputFile, Graph *graph, int width, int height) {
   }
 
   for (int i = 0; i < graph->vertices_n; i++) {
-    graph->vertices[i].v = i;
     graph->x[i] = (double)rand() / RAND_MAX * width;
     graph->y[i] = (double)rand() / RAND_MAX * height;
     graph->vertices[i].name = strdup(vList.names[i]);

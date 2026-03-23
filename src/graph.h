@@ -11,7 +11,6 @@ typedef struct Node {
   int *neighbours; /* dynamiczna tablica identyfikatorów sąsiadów */
   int count;       /* aktualna liczba sąsiadów */
   int size;        /* pojemność tablicy neighbours */
-  int v;           /* identyfikator wierzchołka */
   char *name;      /* nazwa wierzchołka */
 } Node;
 

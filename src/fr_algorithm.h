@@ -8,8 +8,6 @@
 #define TEMP_FACTOR 0.95
 
 #include "graph.h"
-#include <math.h>
-#include <stdlib.h>
 
 /* Algorytm Fruchtermana-Reingolda do rysowania grafów planarnych */
 void fruchtermanReingold(Graph *g, int iterations, double width, double height);

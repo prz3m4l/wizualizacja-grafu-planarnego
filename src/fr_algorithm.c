@@ -1,4 +1,5 @@
 #include "fr_algorithm.h"
+#include <math.h>
 
 void fruchtermanReingold(Graph *graph, int iterations, double width,
                           double height) {

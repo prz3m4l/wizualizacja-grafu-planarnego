@@ -1,4 +1,6 @@
 #include "kk_algorithm.h"
+#include <math.h>
+#include <stdlib.h>
 
 /* Parametry sprężyny między parą wierzchołków (algorytm Kamady-Kawai) */
 typedef struct {
@@ -9,11 +11,13 @@ typedef struct {
 static int **calculateDistances(Graph *graph){
   int **distanceMatrix = malloc(graph->vertices_n * sizeof(int*));
   if(distanceMatrix == NULL){
+    fprintf(stderr, "Błąd! Nie można zaalokować pamięci dla macierzy odległości!\n");
     return NULL;
   }
   for(int i = 0; i < graph->vertices_n; i++){
     distanceMatrix[i] = malloc(graph->vertices_n * sizeof(int));
     if(distanceMatrix[i] == NULL){
+      fprintf(stderr, "Błąd! Nie można zaalokować pamięci dla wiersza macierzy odległości!\n");
       for (int j = i - 1; j >= 0; j--) {
         free(distanceMatrix[j]);
       }
@@ -27,6 +31,7 @@ static int **calculateDistances(Graph *graph){
 
   int *queue = malloc(graph->vertices_n * sizeof(int));
   if(queue == NULL){
+    fprintf(stderr, "Błąd! Nie można zaalokować pamięci dla kolejki w calculateDistances!\n");
     for(int i = 0; i < graph->vertices_n; i++){
       free(distanceMatrix[i]);
     }
