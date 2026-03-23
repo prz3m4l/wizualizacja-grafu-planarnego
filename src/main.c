@@ -20,6 +20,8 @@ int main(int argc, char *argv[]) {
   int width = 1000;
   int height = 1000;
   int iter = 100;
+  int seed = 0;
+  long parsedValue = 0;
   bool isBinary = false;
   bool isText = false;
   bool isSeedSet = false;
@@ -27,8 +29,6 @@ int main(int argc, char *argv[]) {
   char *outputFile = NULL;
   char *algorithmName = NULL;
   char *endPtr = NULL;
-  int seed = 0;
-  long parsedValue = 0;
 
   while ((opt = getopt(argc, argv, "i:o:w:h:t:a:b:s:")) != -1) {
     switch (opt) {
@@ -138,7 +138,7 @@ int main(int argc, char *argv[]) {
 
   int connected = ensureConnectivity(&graph);
   if(connected == -1){
-    fprintf(stderr, "Błąd! Nie można zaalokować pamięci dla tablicy odwiedzonych wierzchołków!\n");
+    fprintf(stderr, "Błąd! Nie można zaalokować pamięci podczas inicjalizacji tablicy postępu (visited)!\n");
     fclose(inFile);
     freeGraph(&graph);
     return -1;
