@@ -237,35 +237,6 @@ int loadGraph(FILE *inputFile, Graph *graph, int width, int height) {
   return 0;
 }
 
-void freeGraph(Graph *graph) {
-  if (!graph || !graph->vertices)
-    return;
-  for (int i = 0; i < graph->vertices_n; ++i) {
-    free(graph->vertices[i].name);
-    graph->vertices[i].name = NULL;
-    free(graph->vertices[i].neighbours);
-    graph->vertices[i].neighbours = NULL;
-  }
-  free(graph->vertices);
-
-  if (graph->edges) {
-    for (int i = 0; i < graph->edges_n; i++)
-      free(graph->edges[i].name);
-    free(graph->edges);
-  }
-  graph->edges = NULL;
-  graph->vertices = NULL;
-  graph->vertices_n = graph->edges_n = 0;
-  free(graph->x);
-  free(graph->y);
-  free(graph->dx);
-  free(graph->dy);
-  graph->x=NULL;
-  graph->y=NULL;
-  graph->dx=NULL;
-  graph->dy=NULL;
-}
-
 void saveResults(FILE *outputFile, Graph *graph, bool isBinary) {
   if (isBinary == false) {
     for (int i = 0; i < graph->vertices_n; i++) {
