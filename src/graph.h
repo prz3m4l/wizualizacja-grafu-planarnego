@@ -28,8 +28,8 @@ typedef struct Edge {
 typedef struct Graph {
   Edge   *edges;      /* tablica krawędzi wczytanych z pliku */
   Node   *vertices;   /* dynamiczna tablica węzłów listy sąsiedztwa */
-  int     vertices_n; /* liczba wierzchołków */
-  int     edges_n;    /* liczba krawędzi */
+  int     verticesCount; /* liczba wierzchołków */
+  int     edgesCount;    /* liczba krawędzi */
   double *x;          /* współrzędne x wierzchołków */
   double *y;          /* współrzędne y wierzchołków */
   double *dx;         /* składowe x sił działających na wierzchołki */

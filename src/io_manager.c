@@ -49,7 +49,7 @@ int initVertexList(VertexList *list) {
   list->capacity = 10;
   list->names = malloc(list->capacity * sizeof(char *));
   if (list->names == NULL) {
-    fprintf(stderr, "Błąd! Nie można zaalokować pamięci przy tworzeniu listy wierzchołków!\n");
+    fprintf(stderr, "Błąd! Nie można zaalokować pamięci podczas tworzenia listy wierzchołków!\n");
     return -1;
   }
   return 0;
@@ -68,7 +68,7 @@ int addUniqueVertex(VertexList *list, const char *name) {
     int newCapacity = list->capacity * 2;
     char **tmp = realloc(list->names, newCapacity * sizeof(char *));
     if (tmp == NULL) {
-      fprintf(stderr, "Błąd! Nie można zaalokować pamięci podczas rozszerzania tablicy krawędzi!\n");
+      fprintf(stderr, "Błąd! Nie można zaalokować pamięci podczas rozszerzania tablicy nazw wierzchołków!\n");
       return -1;
     }
     list->names = tmp;
@@ -76,6 +76,10 @@ int addUniqueVertex(VertexList *list, const char *name) {
   }
 
   list->names[list->count] = strdup(name);
+  if (list->names[list->count] == NULL) {
+    fprintf(stderr, "Błąd! Nie można zaalokować pamięci podczas kopiowania nazwy wierzchołka!\n");
+    return -1;
+  }
   return list->count++;
 }
 
@@ -85,13 +89,13 @@ void cleanupVertexList(VertexList *list) {
   free(list->names);
 }
 
-static int readEdges(FILE *inputFile, Edge **edges_out, int *count_out, VertexList *vList){
+static int readEdges(FILE *inputFile, Edge **edgesOut, int *countOut, VertexList *vList){
   char buff[4096];
   int capacity = 16;
   int count = 0;
   Edge *edges = malloc(capacity * sizeof(Edge));
   if (!edges) {
-    fprintf(stderr, "Błąd! Nie można zaalokować pamięci dla tablicy krawędzi!\n");
+    fprintf(stderr, "Błąd! Nie można zaalokować pamięci podczas tworzenia tablicy krawędzi!\n");
     return -1;
   }
 
@@ -156,6 +160,12 @@ static int readEdges(FILE *inputFile, Edge **edges_out, int *count_out, VertexLi
     edges[count].idA = idA;
     edges[count].idB = idB;
     edges[count].name = strdup(tempName);
+    if (edges[count].name == NULL) {
+      fprintf(stderr, "Błąd! Nie można zaalokować pamięci podczas kopiowania nazwy krawędzi!\n");
+      for(int i = 0; i < count; i++) free(edges[i].name);
+      free(edges);
+      return -1;
+    }
     count++;
   }
 
@@ -165,14 +175,14 @@ static int readEdges(FILE *inputFile, Edge **edges_out, int *count_out, VertexLi
     return -1;
   }
 
-  *edges_out = edges;
-  *count_out = count;
+  *edgesOut = edges;
+  *countOut = count;
   return 0;
 }
 
 static int allocateGraph(Graph *graph, int vCount, int eCount) {
-  graph->vertices_n = vCount;
-  graph->edges_n = eCount;
+  graph->verticesCount = vCount;
+  graph->edgesCount = eCount;
   graph->edges = NULL;
   graph->x = NULL;
   graph->y = NULL;
@@ -186,7 +196,7 @@ static int allocateGraph(Graph *graph, int vCount, int eCount) {
   graph->dy = calloc(vCount, sizeof(double));
 
   if (!graph->vertices || !graph->x || !graph->y || !graph->dx || !graph->dy) {
-    fprintf(stderr, "Błąd! Nie można zaalokować pamięci dla współrzędnych i wierzchołków!\n");
+    fprintf(stderr, "Błąd! Nie można zaalokować pamięci podczas przydzielania współrzędnych i grafu!\n");
     freeGraph(graph);
     return -1;
   }
@@ -223,14 +233,24 @@ int loadGraph(FILE *inputFile, Graph *graph, int width, int height) {
   }
   graph->edges = tempEdges;
   for (int i = 0; i < edgesCount; i++) {
-    addVertex(graph->vertices, graph->edges[i].idA, graph->edges[i].idB);
-    addVertex(graph->vertices, graph->edges[i].idB, graph->edges[i].idA);
+    if (addVertex(graph->vertices, graph->edges[i].idA, graph->edges[i].idB) == -1 ||
+        addVertex(graph->vertices, graph->edges[i].idB, graph->edges[i].idA) == -1) {
+      cleanupVertexList(&vList);
+      freeGraph(graph);
+      return -1;
+    }
   }
 
-  for (int i = 0; i < graph->vertices_n; i++) {
+  for (int i = 0; i < graph->verticesCount; i++) {
     graph->x[i] = (double)rand() / RAND_MAX * width;
     graph->y[i] = (double)rand() / RAND_MAX * height;
     graph->vertices[i].name = strdup(vList.names[i]);
+    if (graph->vertices[i].name == NULL) {
+      fprintf(stderr, "Błąd! Nie można zaalokować pamięci podczas kopiowania nazwy!\n");
+      cleanupVertexList(&vList);
+      freeGraph(graph);
+      return -1;
+    }
   }
 
   cleanupVertexList(&vList);
@@ -239,21 +259,21 @@ int loadGraph(FILE *inputFile, Graph *graph, int width, int height) {
 
 void saveResults(FILE *outputFile, Graph *graph, bool isBinary) {
   if (isBinary == false) {
-    for (int i = 0; i < graph->vertices_n; i++) {
+    for (int i = 0; i < graph->verticesCount; i++) {
         fprintf(outputFile, "%s %g %g\n", graph->vertices[i].name, graph->x[i],
                 graph->y[i]);
     }
   } else {
-    for (int i = 0; i < graph->vertices_n; i++) {
-      uint32_t name_len = strlen(graph->vertices[i].name);
-      uint32_t len_be = toBigEndianUint32(name_len);
-      double x_be = toBigEndianDouble(graph->x[i]);
-      double y_be = toBigEndianDouble(graph->y[i]);
+    for (int i = 0; i < graph->verticesCount; i++) {
+      uint32_t nameLen = strlen(graph->vertices[i].name);
+      uint32_t lenBe = toBigEndianUint32(nameLen);
+      double xBe = toBigEndianDouble(graph->x[i]);
+      double yBe = toBigEndianDouble(graph->y[i]);
       
-      fwrite(&len_be, sizeof(uint32_t), 1, outputFile);
-      fwrite(graph->vertices[i].name, sizeof(char), name_len, outputFile);
-      fwrite(&x_be, sizeof(double), 1, outputFile);
-      fwrite(&y_be, sizeof(double), 1, outputFile);
+      fwrite(&lenBe, sizeof(uint32_t), 1, outputFile);
+      fwrite(graph->vertices[i].name, sizeof(char), nameLen, outputFile);
+      fwrite(&xBe, sizeof(double), 1, outputFile);
+      fwrite(&yBe, sizeof(double), 1, outputFile);
     }
   }
 }

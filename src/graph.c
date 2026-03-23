@@ -6,7 +6,7 @@ int addVertex(Node *vertices, int v, int u) {
     vertex->size = 2;
     vertex->neighbours = malloc(vertex->size * sizeof(int));
     if (vertex->neighbours == NULL) {
-      fprintf(stderr, "Błąd! Nie można zaalokować pamięci dla relacji wierzchołka!\n");
+      fprintf(stderr, "Błąd! Nie można zaalokować pamięci podczas tworzenia relacji wierzchołka!\n");
       return -1;
     }
     vertex->count = 0;
@@ -15,7 +15,7 @@ int addVertex(Node *vertices, int v, int u) {
     int *tmp = realloc(vertex->neighbours, newSize * sizeof(int));
     if (tmp == NULL) {
       fprintf(stderr,
-              "Błąd! Nie można zaalokować pamięci dla sąsiadów wierzchołka!\n");
+              "Błąd! Nie można zaalokować pamięci podczas poszerzania sąsiadów wierzchołka!\n");
       return -1;
     } 
     vertex->neighbours = tmp;
@@ -30,7 +30,7 @@ void freeGraph(Graph *graph) {
     return;
 
   if (graph->vertices) {
-    for (int i = 0; i < graph->vertices_n; ++i) {
+    for (int i = 0; i < graph->verticesCount; ++i) {
       free(graph->vertices[i].name);
       graph->vertices[i].name = NULL;
       free(graph->vertices[i].neighbours);
@@ -40,13 +40,13 @@ void freeGraph(Graph *graph) {
   }
 
   if (graph->edges) {
-    for (int i = 0; i < graph->edges_n; i++)
+    for (int i = 0; i < graph->edgesCount; i++)
       free(graph->edges[i].name);
     free(graph->edges);
   }
   graph->edges = NULL;
   graph->vertices = NULL;
-  graph->vertices_n = graph->edges_n = 0;
+  graph->verticesCount = graph->edgesCount = 0;
   free(graph->x);
   free(graph->y);
   free(graph->dx);
@@ -57,10 +57,10 @@ void freeGraph(Graph *graph) {
   graph->dy=NULL;
 }
 
-static void dfsVisit(const Graph *graph, int current_vertex, bool *visited) {
-  visited[current_vertex] = true;
-  for (int i = 0; i < (graph->vertices[current_vertex].count); i++) {
-    int neighbor = graph->vertices[current_vertex].neighbours[i];
+static void dfsVisit(const Graph *graph, int currentVertex, bool *visited) {
+  visited[currentVertex] = true;
+  for (int i = 0; i < (graph->vertices[currentVertex].count); i++) {
+    int neighbor = graph->vertices[currentVertex].neighbours[i];
     if (visited[neighbor] == false) {
       dfsVisit(graph, neighbor, visited);
     }
@@ -73,34 +73,38 @@ static int addExtraEdge(Graph *graph, int v, int u) {
   if (addVertex(graph->vertices, u, v) == -1)
     return -1;
 
-  Edge *tmp = realloc(graph->edges, (graph->edges_n + 1) * sizeof(Edge));
+  Edge *tmp = realloc(graph->edges, (graph->edgesCount + 1) * sizeof(Edge));
   if (tmp == NULL) {
-    fprintf(stderr, "Błąd! Nie można zaalokować pamięci dla dodatkowej krawędzi!\n");
+    fprintf(stderr, "Błąd! Nie można zaalokować pamięci podczas dodawania dodatkowej krawędzi!\n");
     return -1;
   }
   graph->edges = tmp;
 
-  graph->edges[graph->edges_n].idA = v;
-  graph->edges[graph->edges_n].idB = u;
-  graph->edges[graph->edges_n].name = strdup("Auto-Generated-Edge");
+  graph->edges[graph->edgesCount].idA = v;
+  graph->edges[graph->edgesCount].idB = u;
+  graph->edges[graph->edgesCount].name = strdup("Auto-Generated-Edge");
+  if (graph->edges[graph->edgesCount].name == NULL) {
+    fprintf(stderr, "Błąd! Nie można zaalokować pamięci podczas dodawania nazwy krawędzi!\n");
+    return -1;
+  }
 
-  graph->edges_n++;
+  graph->edgesCount++;
   return 0;
 }
 
 int ensureConnectivity(Graph *graph) {
   bool repaired = false;
-  if (graph->vertices_n == 0)
+  if (graph->verticesCount == 0)
     return 1;
 
-  bool *visited = calloc(graph->vertices_n, sizeof(bool));
+  bool *visited = calloc(graph->verticesCount, sizeof(bool));
   if (visited == NULL) {
-    fprintf(stderr, "Błąd! Nie można zaalokować pamięci dla visited!\n");
+    fprintf(stderr, "Błąd! Nie można zaalokować pamięci podczas tworzenia tablicy algorytmu DFS!\n");
     return -1;
   }
 
   dfsVisit(graph, 0, visited);
-  for (int i = 0; i < graph->vertices_n; i++) {
+  for (int i = 0; i < graph->verticesCount; i++) {
     if (visited[i] == false) {
       repaired = true;
       if (addExtraEdge(graph, 0, i) == -1) {

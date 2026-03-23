@@ -3,7 +3,7 @@
 
 void fruchtermanReingold(Graph *graph, int iterations, double width,
                           double height) {
-  int vn = graph->vertices_n;
+  int vn = graph->verticesCount;
   double k = sqrt((width * height) / vn);
   double t = width / 10; // Temperatura poczatkowa
 
@@ -29,17 +29,17 @@ void fruchtermanReingold(Graph *graph, int iterations, double width,
          * przesunięcie = sila * (wektor kierunkowy / d) czyli:
          * (k * k) * (delta / d) = (k * k * delta) / d^2
          */
-        double force_factor = (k * k) / d2;
-        graph->dx[i] += deltax * force_factor;
-        graph->dy[i] += deltay * force_factor;
+        double forceFactor = (k * k) / d2;
+        graph->dx[i] += deltax * forceFactor;
+        graph->dy[i] += deltay * forceFactor;
         // Odpychanie w przeciwna stronę
-        graph->dx[j] -= deltax * force_factor;
-        graph->dy[j] -= deltay * force_factor;
+        graph->dx[j] -= deltax * forceFactor;
+        graph->dy[j] -= deltay * forceFactor;
       }
     }
 
     // Przyciąganie
-    for (int i = 0; i < graph->edges_n; i++) {
+    for (int i = 0; i < graph->edgesCount; i++) {
       int idA = graph->edges[i].idA;
       int idB = graph->edges[i].idB;
 
@@ -50,21 +50,21 @@ void fruchtermanReingold(Graph *graph, int iterations, double width,
         d = MIN_DIST;
 
       // f_a = d^2 / k -> składowa = (d^2 / k) * (delta / d) = (d * delta) / k
-      double force_factor = (d / k);
-      graph->dx[idA] -= deltax * force_factor;
-      graph->dy[idA] -= deltay * force_factor;
+      double forceFactor = (d / k);
+      graph->dx[idA] -= deltax * forceFactor;
+      graph->dy[idA] -= deltay * forceFactor;
       // Przyciąganie w przeciwna stronę
-      graph->dx[idB] += deltax * force_factor;
-      graph->dy[idB] += deltay * force_factor;
+      graph->dx[idB] += deltax * forceFactor;
+      graph->dy[idB] += deltay * forceFactor;
     }
 
     // Ruch
     for (int i = 0; i < vn; i++) {
-      double screen_distance =
+      double screenDistance =
           sqrt(graph->dx[i] * graph->dx[i] + graph->dy[i] * graph->dy[i]);
-      if (screen_distance > 0) {
-        graph->x[i] += (graph->dx[i] / screen_distance) * fmin(screen_distance, t);
-        graph->y[i] += (graph->dy[i] / screen_distance) * fmin(screen_distance, t);
+      if (screenDistance > 0) {
+        graph->x[i] += (graph->dx[i] / screenDistance) * fmin(screenDistance, t);
+        graph->y[i] += (graph->dy[i] / screenDistance) * fmin(screenDistance, t);
       }
 
       // Bariery(jakby cos chcialo wyjsc)

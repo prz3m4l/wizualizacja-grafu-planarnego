@@ -9,37 +9,37 @@ typedef struct {
 } Spring;
 
 static int **calculateDistances(Graph *graph){
-  int **distanceMatrix = malloc(graph->vertices_n * sizeof(int*));
+  int **distanceMatrix = malloc(graph->verticesCount * sizeof(int*));
   if(distanceMatrix == NULL){
-    fprintf(stderr, "Błąd! Nie można zaalokować pamięci dla macierzy odległości!\n");
+    fprintf(stderr, "Błąd! Nie można zaalokować pamięci podczas tworzenia macierzy odległości!\n");
     return NULL;
   }
-  for(int i = 0; i < graph->vertices_n; i++){
-    distanceMatrix[i] = malloc(graph->vertices_n * sizeof(int));
+  for(int i = 0; i < graph->verticesCount; i++){
+    distanceMatrix[i] = malloc(graph->verticesCount * sizeof(int));
     if(distanceMatrix[i] == NULL){
-      fprintf(stderr, "Błąd! Nie można zaalokować pamięci dla wiersza macierzy odległości!\n");
+      fprintf(stderr, "Błąd! Nie można zaalokować pamięci podczas tworzenia wiersza macierzy odległości!\n");
       for (int j = i - 1; j >= 0; j--) {
         free(distanceMatrix[j]);
       }
       free(distanceMatrix);
       return NULL;
     }
-    for(int j = 0; j < graph->vertices_n; j++){
+    for(int j = 0; j < graph->verticesCount; j++){
       distanceMatrix[i][j] = -1;
     }
   }
 
-  int *queue = malloc(graph->vertices_n * sizeof(int));
+  int *queue = malloc(graph->verticesCount * sizeof(int));
   if(queue == NULL){
-    fprintf(stderr, "Błąd! Nie można zaalokować pamięci dla kolejki w calculateDistances!\n");
-    for(int i = 0; i < graph->vertices_n; i++){
+    fprintf(stderr, "Błąd! Nie można zaalokować pamięci podczas obliczania odległości (kolejka)!\n");
+    for(int i = 0; i < graph->verticesCount; i++){
       free(distanceMatrix[i]);
     }
     free(distanceMatrix);
     return NULL;
   }
 
-  for(int i = 0; i < graph->vertices_n; i++){
+  for(int i = 0; i < graph->verticesCount; i++){
     distanceMatrix[i][i] = 0;
     int head = 0;
     int tail = 0;
@@ -66,12 +66,12 @@ static int **calculateDistances(Graph *graph){
 void kamadaKawaiLayout(Graph *graph, int width, int height, int iterations){
   int **distances = calculateDistances(graph);
   if(distances == NULL){
-    fprintf(stderr, "Błąd! Brak pamięci na alokację tablicy odległości!\n");
+    fprintf(stderr, "Błąd! Nie można zaalokować pamięci podczas zbierania wyników macierzy!\n");
     return;
   }
   int maxDistance = 0;
-  for(int i = 0; i<graph->vertices_n; i++){
-    for(int j = 0; j<graph->vertices_n; j++){
+  for(int i = 0; i<graph->verticesCount; i++){
+    for(int j = 0; j<graph->verticesCount; j++){
       if(distances[i][j] > maxDistance){
         maxDistance = distances[i][j];
       }
@@ -82,32 +82,32 @@ void kamadaKawaiLayout(Graph *graph, int width, int height, int iterations){
     maxDistance = 1; 
   }
   double idealLengthOfSingleEdge = (double)(width < height ? width : height) / maxDistance;
-  Spring **springs = malloc(graph->vertices_n * sizeof(Spring*));
+  Spring **springs = malloc(graph->verticesCount * sizeof(Spring*));
   if(springs == NULL){
-    fprintf(stderr, "Błąd! Brak pamięci na macierz sprężyn!\n");
-    for(int i = 0; i<graph->vertices_n; i++){
+    fprintf(stderr, "Błąd! Nie można zaalokować pamięci podczas generowania macierzy sprężyn!\n");
+    for(int i = 0; i<graph->verticesCount; i++){
       free(distances[i]);
     }
     free(distances);
     return;
   }
-  for(int i = 0; i < graph->vertices_n; i++){
-    springs[i] = malloc(graph->vertices_n * sizeof(Spring));
+  for(int i = 0; i < graph->verticesCount; i++){
+    springs[i] = malloc(graph->verticesCount * sizeof(Spring));
     if(springs[i] == NULL){
-      fprintf(stderr, "Błąd! Brak pamięci na wiersz macierzy sprężyn!\n");
+      fprintf(stderr, "Błąd! Nie można zaalokować pamięci podczas generowania wiersza macierzy sprężyn!\n");
       for(int j = i - 1; j >= 0; j--){
         free(springs[j]);
       }
       free(springs);
-      for(int j = 0; j<graph->vertices_n; j++){
+      for(int j = 0; j<graph->verticesCount; j++){
         free(distances[j]);
       }
       free(distances);
       return;
     }
   }
-  for(int i = 0; i < graph->vertices_n; i++){
-    for(int j = 0; j < graph->vertices_n; j++){
+  for(int i = 0; i < graph->verticesCount; i++){
+    for(int j = 0; j < graph->verticesCount; j++){
       if(i == j){
         springs[i][j].length = springs[i][j].stiffness = 0.0;
         continue;
@@ -123,50 +123,50 @@ void kamadaKawaiLayout(Graph *graph, int width, int height, int iterations){
       springs[i][j].stiffness = K/(distances[i][j]*distances[i][j]);
     }
   }
-  for(int i = 0; i<graph->vertices_n; i++){
+  for(int i = 0; i<graph->verticesCount; i++){
     free(distances[i]);
   }
   free(distances);
 
-  for(int i = 0; i<graph->vertices_n; i++){
+  for(int i = 0; i<graph->verticesCount; i++){
     graph->x[i] = ((double)rand() / RAND_MAX) * width;
     graph->y[i] = ((double)rand() / RAND_MAX) * height;
   }
 
-  double learning_rate = 0.1; // Temperatura
+  double learningRate = 0.1; // Temperatura
   for(int iter = 0; iter < iterations; iter++){
     double deltaX = 0.0; 
     double deltaY = 0.0;
-    double screen_distance = 0.0; // Odległość na ekranie
-    double screen_stretch = 0.0; // Jak długa teraz jest
-    double spring_force = 0.0; // Siła sprężyny
+    double screenDistance = 0.0; // Odległość na ekranie
+    double screenStretch = 0.0; // Jak długa teraz jest
+    double springForce = 0.0; // Siła sprężyny
     /* Wyzerowanie siły z poprzedniej iteracji */
-    for(int i = 0; i < graph->vertices_n; i++){
+    for(int i = 0; i < graph->verticesCount; i++){
       graph->dx[i] = 0.0;
       graph->dy[i] = 0.0;
     }
     /* Liczenie siły dla każdej pary wierzchołków */
-    for(int i = 0; i < graph->vertices_n; i++){
-      for(int j = 0; j < graph->vertices_n; j++){
+    for(int i = 0; i < graph->verticesCount; i++){
+      for(int j = 0; j < graph->verticesCount; j++){
         if(i == j){
           continue;
         }
         deltaX = graph->x[j] - graph->x[i];
         deltaY = graph->y[j] - graph->y[i];
-        screen_distance = sqrt((deltaX*deltaX) + (deltaY*deltaY));
-        if(screen_distance < 0.0001) {
-            screen_distance = 0.0001;
+        screenDistance = sqrt((deltaX*deltaX) + (deltaY*deltaY));
+        if(screenDistance < 0.0001) {
+            screenDistance = 0.0001;
         }
-        screen_stretch = screen_distance - springs[i][j].length;
-        spring_force = springs[i][j].stiffness * screen_stretch;
-        graph->dx[i] = graph->dx[i] + spring_force * (deltaX/screen_distance);
-        graph->dy[i] = graph->dy[i] + spring_force * (deltaY/screen_distance);
+        screenStretch = screenDistance - springs[i][j].length;
+        springForce = springs[i][j].stiffness * screenStretch;
+        graph->dx[i] = graph->dx[i] + springForce * (deltaX/screenDistance);
+        graph->dy[i] = graph->dy[i] + springForce * (deltaY/screenDistance);
       }
     }
     /* Przesuwanie wierzchołków o wyliczone siły */
-    for(int i = 0; i < graph->vertices_n; i++){
-      graph->x[i] = graph->x[i] + (graph->dx[i] * learning_rate);
-      graph->y[i] = graph->y[i] + (graph->dy[i] * learning_rate); 
+    for(int i = 0; i < graph->verticesCount; i++){
+      graph->x[i] = graph->x[i] + (graph->dx[i] * learningRate);
+      graph->y[i] = graph->y[i] + (graph->dy[i] * learningRate); 
 
       if (graph->x[i] < 0){
         graph->x[i] = 0;
@@ -179,9 +179,9 @@ void kamadaKawaiLayout(Graph *graph, int width, int height, int iterations){
         graph->y[i] = height;
       }
     }
-    learning_rate = learning_rate * 0.99; /* Aby wierzchołki poruszały się coraz lżej */
+    learningRate = learningRate * 0.99; /* Aby wierzchołki poruszały się coraz lżej */
   }
-  for(int i = 0; i < graph->vertices_n; i++){
+  for(int i = 0; i < graph->verticesCount; i++){
     free(springs[i]);
   }
   free(springs);
