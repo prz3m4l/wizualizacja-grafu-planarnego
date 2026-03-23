@@ -2,11 +2,11 @@
 
 int addVertex(Node *vertices, int v, int u) {
   Node *vertex = &vertices[v];
-  vertex->v = v;
   if (vertex->size == 0) {
     vertex->size = 2;
     vertex->neighbours = malloc(vertex->size * sizeof(int));
     if (vertex->neighbours == NULL) {
+      fprintf(stderr, "Błąd! Nie można zaalokować pamięci dla relacji wierzchołka!\n");
       return -1;
     }
     vertex->count = 0;
@@ -74,13 +74,14 @@ static int addExtraEdge(Graph *graph, int v, int u) {
     return -1;
 
   Edge *tmp = realloc(graph->edges, (graph->edges_n + 1) * sizeof(Edge));
-  if (tmp == NULL)
+  if (tmp == NULL) {
+    fprintf(stderr, "Błąd! Nie można zaalokować pamięci dla dodatkowej krawędzi!\n");
     return -1;
+  }
   graph->edges = tmp;
 
   graph->edges[graph->edges_n].idA = v;
   graph->edges[graph->edges_n].idB = u;
-  graph->edges[graph->edges_n].weight = 1.0;
   graph->edges[graph->edges_n].name = strdup("Auto-Generated-Edge");
 
   graph->edges_n++;
@@ -93,8 +94,10 @@ int ensureConnectivity(Graph *graph) {
     return 1;
 
   bool *visited = calloc(graph->vertices_n, sizeof(bool));
-  if (visited == NULL)
+  if (visited == NULL) {
+    fprintf(stderr, "Błąd! Nie można zaalokować pamięci dla visited!\n");
     return -1;
+  }
 
   dfsVisit(graph, 0, visited);
   for (int i = 0; i < graph->vertices_n; i++) {
