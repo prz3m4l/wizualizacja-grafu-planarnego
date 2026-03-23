@@ -6,33 +6,38 @@ int addVertex(Node *vertices, int v, int u) {
   if (vertex->size == 0) {
     vertex->size = 2;
     vertex->neighbours = malloc(vertex->size * sizeof(int));
+    if (vertex->neighbours == NULL) {
+      return -1;
+    }
     vertex->count = 0;
   } else if (vertex->size <= vertex->count) {
-    vertex->size *= 2;
-    int *tmp = realloc(vertex->neighbours, vertex->size * sizeof(int));
+    int newSize = vertex->size * 2;
+    int *tmp = realloc(vertex->neighbours, newSize * sizeof(int));
     if (tmp == NULL) {
       fprintf(stderr,
               "Błąd! Nie można zaalokować pamięci dla sąsiadów wierzchołka!\n");
       return -1;
-    } else {
-      vertex->neighbours = tmp;
+    } 
+    vertex->neighbours = tmp;
+        vertex->size = newSize; // Dopiero po sukcesie aktualizujemy rozmiar
     }
-  }
-  vertex->neighbours[vertex->count] = u;
-  vertex->count++;
-  return 0;
+    vertex->neighbours[vertex->count++] = u;
+    return 0;
 }
 
 void freeGraph(Graph *graph) {
-  if (!graph || !graph->vertices)
+  if (!graph)
     return;
-  for (int i = 0; i < graph->vertices_n; ++i) {
-    free(graph->vertices[i].name);
-    graph->vertices[i].name = NULL;
-    free(graph->vertices[i].neighbours);
-    graph->vertices[i].neighbours = NULL;
+
+  if (graph->vertices) {
+    for (int i = 0; i < graph->vertices_n; ++i) {
+      free(graph->vertices[i].name);
+      graph->vertices[i].name = NULL;
+      free(graph->vertices[i].neighbours);
+      graph->vertices[i].neighbours = NULL;
+    }
+    free(graph->vertices);
   }
-  free(graph->vertices);
 
   if (graph->edges) {
     for (int i = 0; i < graph->edges_n; i++)

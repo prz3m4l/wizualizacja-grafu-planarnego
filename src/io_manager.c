@@ -65,23 +65,18 @@ int addUniqueVertex(VertexList *list, const char *name) {
 
   // Jeśli brak miejsca powiększ tablicę
   if (list->count >= list->capacity) {
-    list->capacity *= 2;
-    char **tmp = realloc(list->names, list->capacity * sizeof(char *));
+    int newCapacity = list->capacity * 2;
+    char **tmp = realloc(list->names, newCapacity * sizeof(char *));
     if (tmp == NULL) {
       fprintf(stderr, "Błąd! Nie można zaalokować pamięci podczas rozszerzania tablicy krawędzi!\n");
-      for(int i = 0; i < list->count; i++) {
-        free(list->names[i]);
-      }
-      free(list->names);
       return -1;
     }
     list->names = tmp;
+    list->capacity = newCapacity;
   }
 
   list->names[list->count] = strdup(name);
-  int new_id = list->count;
-  list->count++;
-  return new_id;
+  return list->count++;
 }
 
 void cleanupVertexList(VertexList *list) {
@@ -209,6 +204,13 @@ int loadGraph(FILE *inputFile, Graph *graph, int width, int height) {
 
   if (readEdges(inputFile, &tempEdges, &edgesCount, &vList) != 0) {
     cleanupVertexList(&vList);
+    return -1;
+  }
+
+  if (vList.count == 0) {
+    fprintf(stderr, "Błąd! Plik nie zawiera żadnych wierzchołków! \n");
+    cleanupVertexList(&vList);
+    free(tempEdges);
     return -1;
   }
 
