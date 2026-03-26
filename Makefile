@@ -22,3 +22,15 @@ clean:
 
 run: $(EXEC)
 	./$(EXEC) -i data/graf.txt -o data/wyniki.txt -a kamada -s 17
+
+kkss: $(EXEC)
+	./$(EXEC) -i data/graf.txt -o data/wyniki.txt -a kamada -s 1
+
+frss: $(EXEC)
+	./$(EXEC) -i data/graf.txt -o data/wyniki.txt -a fruchterman -s 1
+
+kkrs: $(EXEC)
+	./$(EXEC) -i data/graf.txt -o data/wyniki.txt -a kamada
+
+frrs: $(EXEC)
+	./$(EXEC) -i data/graf.txt -o data/wyniki.txt -a fruchterman

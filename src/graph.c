@@ -19,10 +19,10 @@ int addVertex(Node *vertices, int v, int u) {
       return -1;
     } 
     vertex->neighbours = tmp;
-        vertex->size = newSize; // Dopiero po sukcesie aktualizujemy rozmiar
+    vertex->size = newSize; // Dopiero po sukcesie aktualizujemy rozmiar
     }
-    vertex->neighbours[vertex->count++] = u;
-    return 0;
+  vertex->neighbours[vertex->count++] = u;
+  return 0;
 }
 
 void freeGraph(Graph *graph) {

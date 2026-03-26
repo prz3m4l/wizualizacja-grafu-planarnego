@@ -21,7 +21,7 @@ int main(int argc, char *argv[]) {
   int height = 1000;
   int iter = 100;
   int seed = 0;
-  long parsedValue = 0;
+  long parsedValue = 0.0;
   bool isBinary = false;
   bool isText = false;
   bool isSeedSet = false;
@@ -137,12 +137,12 @@ int main(int argc, char *argv[]) {
   }
 
   int connected = ensureConnectivity(&graph);
-  if(connected == -1){
+  if (connected == -1) {
     fprintf(stderr, "Błąd! Nie można zaalokować pamięci podczas inicjalizacji tablicy postępu (visited)!\n");
     fclose(inFile);
     freeGraph(&graph);
     return -1;
-  }else if(connected == 0){
+  } else if (connected == 0) {
     fprintf(stderr, "Ostrzeżenie: Graf był niespójny! Automatycznie dodano brakujące krawędzie.\n");
   }
   fclose(inFile);
@@ -171,8 +171,7 @@ int main(int argc, char *argv[]) {
 
   saveResults(outFile, &graph, isBinary);
   fclose(outFile);
-
-  freeGraph(
-      &graph); /* zwolnienie pamięci zaalokowanej na wierzchołki i sąsiadów */
+  /* zwolnienie pamięci zaalokowanej na wierzchołki i sąsiadów */
+  freeGraph(&graph); 
   return 0;
 }
