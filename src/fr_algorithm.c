@@ -2,26 +2,31 @@
 #include <math.h>
 
 void fruchtermanReingold(Graph *graph, int iterations, double width,
-                          double height) {
+                         double height)
+{
   int vn = graph->verticesCount;
   double k = sqrt((width * height) / vn);
   double t = width / 10; // Temperatura poczatkowa
 
-  for (int iter = 0; iter < iterations; iter++) {
+  for (int iter = 0; iter < iterations; iter++)
+  {
     // Zerowanie sił
-    for (int i = 0; i < vn; i++) {
+    for (int i = 0; i < vn; i++)
+    {
       graph->dx[i] = 0.0;
       graph->dy[i] = 0.0;
     }
 
     // Odpychanie
-    for (int i = 0; i < vn; i++) {
-      for (int j = i + 1; j < vn; j++) {
+    for (int i = 0; i < vn; i++)
+    {
+      for (int j = i + 1; j < vn; j++)
+      {
         // liczenie dystansu
         double deltax = graph->x[i] - graph->x[j];
         double deltay = graph->y[i] - graph->y[j];
         double d2 = deltax * deltax + deltay * deltay; // d^2 zeby uniknac sqrt
-        if (d2 < MIN_DIST) // aby uniknac dzielenia przez 0
+        if (d2 < MIN_DIST)                             // aby uniknac dzielenia przez 0
           d2 = MIN_DIST;
 
         /*
@@ -39,7 +44,8 @@ void fruchtermanReingold(Graph *graph, int iterations, double width,
     }
 
     // Przyciąganie
-    for (int i = 0; i < graph->edgesCount; i++) {
+    for (int i = 0; i < graph->edgesCount; i++)
+    {
       int idA = graph->edges[i].idA;
       int idB = graph->edges[i].idB;
 
@@ -59,10 +65,12 @@ void fruchtermanReingold(Graph *graph, int iterations, double width,
     }
 
     // Ruch
-    for (int i = 0; i < vn; i++) {
+    for (int i = 0; i < vn; i++)
+    {
       double screenDistance =
           sqrt(graph->dx[i] * graph->dx[i] + graph->dy[i] * graph->dy[i]);
-      if (screenDistance > 0) {
+      if (screenDistance > 0)
+      {
         graph->x[i] += (graph->dx[i] / screenDistance) * fmin(screenDistance, t);
         graph->y[i] += (graph->dy[i] / screenDistance) * fmin(screenDistance, t);
       }
