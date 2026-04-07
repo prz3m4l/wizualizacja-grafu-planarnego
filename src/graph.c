@@ -1,36 +1,45 @@
 #include "graph.h"
 
-int addVertex(Node *vertices, int v, int u) {
+int addVertex(Node *vertices, int v, int u)
+{
   Node *vertex = &vertices[v];
-  if (vertex->size == 0) {
+  if (vertex->size == 0)
+  {
     vertex->size = 2;
     vertex->neighbours = malloc(vertex->size * sizeof(int));
-    if (vertex->neighbours == NULL) {
+    if (vertex->neighbours == NULL)
+    {
       fprintf(stderr, "Błąd! Nie można zaalokować pamięci podczas tworzenia relacji wierzchołka!\n");
       return -1;
     }
     vertex->count = 0;
-  } else if (vertex->size <= vertex->count) {
+  }
+  else if (vertex->size <= vertex->count)
+  {
     int newSize = vertex->size * 2;
     int *tmp = realloc(vertex->neighbours, newSize * sizeof(int));
-    if (tmp == NULL) {
+    if (tmp == NULL)
+    {
       fprintf(stderr,
               "Błąd! Nie można zaalokować pamięci podczas poszerzania sąsiadów wierzchołka!\n");
       return -1;
-    } 
+    }
     vertex->neighbours = tmp;
     vertex->size = newSize; // Dopiero po sukcesie aktualizujemy rozmiar
-    }
+  }
   vertex->neighbours[vertex->count++] = u;
   return 0;
 }
 
-void freeGraph(Graph *graph) {
+void freeGraph(Graph *graph)
+{
   if (!graph)
     return;
 
-  if (graph->vertices) {
-    for (int i = 0; i < graph->verticesCount; ++i) {
+  if (graph->vertices)
+  {
+    for (int i = 0; i < graph->verticesCount; ++i)
+    {
       free(graph->vertices[i].name);
       graph->vertices[i].name = NULL;
       free(graph->vertices[i].neighbours);
@@ -39,7 +48,8 @@ void freeGraph(Graph *graph) {
     free(graph->vertices);
   }
 
-  if (graph->edges) {
+  if (graph->edges)
+  {
     for (int i = 0; i < graph->edgesCount; i++)
       free(graph->edges[i].name);
     free(graph->edges);
@@ -51,30 +61,35 @@ void freeGraph(Graph *graph) {
   free(graph->y);
   free(graph->dx);
   free(graph->dy);
-  graph->x=NULL;
-  graph->y=NULL;
-  graph->dx=NULL;
-  graph->dy=NULL;
+  graph->x = NULL;
+  graph->y = NULL;
+  graph->dx = NULL;
+  graph->dy = NULL;
 }
 
-static void dfsVisit(const Graph *graph, int currentVertex, bool *visited) {
+static void dfsVisit(const Graph *graph, int currentVertex, bool *visited)
+{
   visited[currentVertex] = true;
-  for (int i = 0; i < (graph->vertices[currentVertex].count); i++) {
+  for (int i = 0; i < (graph->vertices[currentVertex].count); i++)
+  {
     int neighbor = graph->vertices[currentVertex].neighbours[i];
-    if (visited[neighbor] == false) {
+    if (visited[neighbor] == false)
+    {
       dfsVisit(graph, neighbor, visited);
     }
   }
 }
 
-static int addExtraEdge(Graph *graph, int v, int u) {
+static int addExtraEdge(Graph *graph, int v, int u)
+{
   if (addVertex(graph->vertices, v, u) == -1)
     return -1;
   if (addVertex(graph->vertices, u, v) == -1)
     return -1;
 
   Edge *tmp = realloc(graph->edges, (graph->edgesCount + 1) * sizeof(Edge));
-  if (tmp == NULL) {
+  if (tmp == NULL)
+  {
     fprintf(stderr, "Błąd! Nie można zaalokować pamięci podczas dodawania dodatkowej krawędzi!\n");
     return -1;
   }
@@ -83,7 +98,8 @@ static int addExtraEdge(Graph *graph, int v, int u) {
   graph->edges[graph->edgesCount].idA = v;
   graph->edges[graph->edgesCount].idB = u;
   graph->edges[graph->edgesCount].name = strdup("Auto-Generated-Edge");
-  if (graph->edges[graph->edgesCount].name == NULL) {
+  if (graph->edges[graph->edgesCount].name == NULL)
+  {
     fprintf(stderr, "Błąd! Nie można zaalokować pamięci podczas dodawania nazwy krawędzi!\n");
     return -1;
   }
@@ -92,22 +108,27 @@ static int addExtraEdge(Graph *graph, int v, int u) {
   return 0;
 }
 
-int ensureConnectivity(Graph *graph) {
+int ensureConnectivity(Graph *graph)
+{
   bool repaired = false;
   if (graph->verticesCount == 0)
     return 1;
 
   bool *visited = calloc(graph->verticesCount, sizeof(bool));
-  if (visited == NULL) {
+  if (visited == NULL)
+  {
     fprintf(stderr, "Błąd! Nie można zaalokować pamięci podczas tworzenia tablicy algorytmu DFS!\n");
     return -1;
   }
 
   dfsVisit(graph, 0, visited);
-  for (int i = 0; i < graph->verticesCount; i++) {
-    if (visited[i] == false) {
+  for (int i = 0; i < graph->verticesCount; i++)
+  {
+    if (visited[i] == false)
+    {
       repaired = true;
-      if (addExtraEdge(graph, 0, i) == -1) {
+      if (addExtraEdge(graph, 0, i) == -1)
+      {
         free(visited);
         return -1;
       }
