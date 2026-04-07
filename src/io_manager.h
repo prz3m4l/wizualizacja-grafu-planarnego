@@ -8,6 +8,26 @@
 #include <stdio.h>
 #include <string.h>
 
+#define MAX_WIDTH 100000
+#define MAX_HEIGHT 100000
+#define MAX_ITER 100000
+
+typedef struct
+{
+  int width;
+  int height;
+  int iter;
+  int seed;
+  bool isBinary;
+  bool isText;
+  bool isSeedSet;
+  char *inputFile;
+  char *outputFile;
+  char *algorithmName;
+} CliFlags;
+
+int parseCliFlags(int argc, char *argv[], CliFlags *flags);
+
 /* Zapisuje wyniki algorytmów do pliku wyjściowego */
 void saveResults(FILE *outputFiles, Graph *graf, bool isBinary);
 

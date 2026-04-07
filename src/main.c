@@ -11,122 +11,45 @@
 #include <time.h>
 #include <unistd.h>
 
-#define MAX_WIDTH 100000
-#define MAX_HEIGHT 100000
-#define MAX_ITER 100000
-
 int main(int argc, char *argv[])
 {
-  int opt = 0;
-  int width = 1000;
-  int height = 1000;
-  int iter = 100;
-  int seed = 0;
-  long parsedValue = 0.0;
-  bool isBinary = false;
-  bool isText = false;
-  bool isSeedSet = false;
-  char *inputFile = NULL;
-  char *outputFile = NULL;
-  char *algorithmName = NULL;
-  char *endPtr = NULL;
-
-  while ((opt = getopt(argc, argv, "i:o:w:h:t:a:b:s:")) != -1)
+  CliFlags flags;
+  if (parseCliFlags(argc, argv, &flags) == -1)
   {
-    switch (opt)
-    {
-    case 'i':
-      inputFile = optarg;
-      break;
-    case 'o':
-      isText = true;
-      outputFile = optarg;
-      break;
-    case 'w':
-      errno = 0;
-      parsedValue = strtol(optarg, &endPtr, 10);
-      if (errno != 0 || *endPtr != '\0')
-      {
-        fprintf(stderr, "Błąd! Nieprawidłowa wartość dla -w: %s!\n", optarg);
-        return -1;
-      }
-      width = (int)parsedValue;
-      break;
-    case 'h':
-      errno = 0;
-      parsedValue = strtol(optarg, &endPtr, 10);
-      if (errno != 0 || *endPtr != '\0')
-      {
-        fprintf(stderr, "Błąd! Nieprawidłowa wartość dla -h: %s!\n", optarg);
-        return -1;
-      }
-      height = (int)parsedValue;
-      break;
-    case 't':
-      errno = 0;
-      parsedValue = strtol(optarg, &endPtr, 10);
-      if (errno != 0 || *endPtr != '\0')
-      {
-        fprintf(stderr, "Błąd! Nieprawidłowa wartość dla -t: %s!\n", optarg);
-        return -1;
-      }
-      iter = (int)parsedValue;
-      break;
-    case 'a':
-      algorithmName = optarg;
-      break;
-    case 'b':
-      isBinary = true;
-      outputFile = optarg;
-      break;
-    case 's':
-      errno = 0;
-      parsedValue = strtol(optarg, &endPtr, 10);
-      if (errno != 0 || *endPtr != '\0')
-      {
-        fprintf(stderr, "Błąd! Nieprawidłowa wartość dla -s: %s!\n", optarg);
-        return -1;
-      }
-      seed = (int)parsedValue;
-      isSeedSet = true;
-      break;
-    case '?':
-      fprintf(stderr, "Błąd! Nieznana flaga lub brak argumentu do opcji!\n");
-      return -1;
-    }
+    return -1;
   }
 
-  if (isSeedSet)
+  if (flags.isSeedSet)
   {
-    srand(seed);
+    srand(flags.seed);
   }
   else
   {
     srand(time(NULL));
   }
 
-  if (width <= 0 || width > MAX_WIDTH || height <= 0 || height > MAX_HEIGHT ||
-      iter <= 0 || iter > MAX_ITER)
+  if (flags.width <= 0 || flags.width > MAX_WIDTH || flags.height <= 0 || flags.height > MAX_HEIGHT ||
+      flags.iter <= 0 || flags.iter > MAX_ITER)
   {
     fprintf(stderr, "Błąd! Wartości width/height muszą być w zakresie [1, "
                     "100000], iter w zakresie [1, 100000]!\n");
     return -1;
   }
 
-  if (inputFile == NULL || outputFile == NULL)
+  if (flags.inputFile == NULL || flags.outputFile == NULL)
   {
     fprintf(stderr, "Błąd! Nie podano pliku wejściowego lub wyjściowego!\n");
     return -1;
   }
 
-  if (isText == true && isBinary == true)
+  if (flags.isText == true && flags.isBinary == true)
   {
     fprintf(stderr, "Błąd! Wybrano jednocześnie zapis wyników w formie "
                     "tekstowej i binarnej!");
     return -1;
   }
 
-  FILE *inFile = fopen(inputFile, "r");
+  FILE *inFile = fopen(flags.inputFile, "r");
   if (inFile == NULL)
   {
     fprintf(stderr, "Błąd! Nie można otworzyć pliku wejściowego!\n");
@@ -134,9 +57,8 @@ int main(int argc, char *argv[])
   }
 
   /* wczytywanie grafu */
-  Graph graph = {
-      0}; /* zabezpiecznie przed segmentation fault w cleanupOnError */
-  if (loadGraph(inFile, &graph, width, height) != 0)
+  Graph graph = {0};
+  if (loadGraph(inFile, &graph, flags.width, flags.height) != 0)
   {
     fprintf(stderr, "Błąd! Nie można wczytać grafu z pliku!\n");
     fclose(inFile);
@@ -166,13 +88,13 @@ int main(int argc, char *argv[])
   }
   fclose(inFile);
 
-  if (algorithmName == NULL || (strcmp(algorithmName, "fruchterman") == 0))
+  if (flags.algorithmName == NULL || (strcmp(flags.algorithmName, "fruchterman") == 0))
   {
-    fruchtermanReingold(&graph, iter, width, height);
+    fruchtermanReingold(&graph, flags.iter, flags.width, flags.height);
   }
-  else if (strcmp(algorithmName, "kamada") == 0)
+  else if (strcmp(flags.algorithmName, "kamada") == 0)
   {
-    kamadaKawaiLayout(&graph, width, height, iter);
+    kamadaKawaiLayout(&graph, flags.width, flags.height, flags.iter);
   }
   else
   {
@@ -182,13 +104,13 @@ int main(int argc, char *argv[])
   }
 
   FILE *outFile = NULL;
-  if (isBinary == false)
+  if (flags.isBinary == false)
   {
-    outFile = fopen(outputFile, "w");
+    outFile = fopen(flags.outputFile, "w");
   }
   else
   {
-    outFile = fopen(outputFile, "wb");
+    outFile = fopen(flags.outputFile, "wb");
   }
   if (outFile == NULL)
   {
@@ -197,7 +119,7 @@ int main(int argc, char *argv[])
     return -1;
   }
 
-  saveResults(outFile, &graph, isBinary);
+  saveResults(outFile, &graph, flags.isBinary);
   fclose(outFile);
   /* zwolnienie pamięci zaalokowanej na wierzchołki i sąsiadów */
   freeGraph(&graph);

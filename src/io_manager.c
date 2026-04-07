@@ -1,4 +1,7 @@
 #include "io_manager.h"
+#include <errno.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 int isLittleEndian(void)
 {
@@ -330,4 +333,88 @@ void saveResults(FILE *outputFile, Graph *graph, bool isBinary)
       fwrite(&yBe, sizeof(double), 1, outputFile);
     }
   }
+}
+
+int parseCliFlags(int argc, char *argv[], CliFlags *flags)
+{
+  int opt = 0;
+  long parsedValue = 0.0;
+  char *endPtr = NULL;
+
+  flags->width = 1000;
+  flags->height = 1000;
+  flags->iter = 100;
+  flags->seed = 0;
+  flags->isBinary = false;
+  flags->isText = false;
+  flags->isSeedSet = false;
+  flags->inputFile = NULL;
+  flags->outputFile = NULL;
+  flags->algorithmName = NULL;
+
+  while ((opt = getopt(argc, argv, "i:o:w:h:t:a:b:s:")) != -1)
+  {
+    switch (opt)
+    {
+    case 'i':
+      flags->inputFile = optarg;
+      break;
+    case 'o':
+      flags->isText = true;
+      flags->outputFile = optarg;
+      break;
+    case 'w':
+      errno = 0;
+      parsedValue = strtol(optarg, &endPtr, 10);
+      if (errno != 0 || *endPtr != '\0')
+      {
+        fprintf(stderr, "Błąd! Nieprawidłowa wartość dla -w: %s!\n", optarg);
+        return -1;
+      }
+      flags->width = (int)parsedValue;
+      break;
+    case 'h':
+      errno = 0;
+      parsedValue = strtol(optarg, &endPtr, 10);
+      if (errno != 0 || *endPtr != '\0')
+      {
+        fprintf(stderr, "Błąd! Nieprawidłowa wartość dla -h: %s!\n", optarg);
+        return -1;
+      }
+      flags->height = (int)parsedValue;
+      break;
+    case 't':
+      errno = 0;
+      parsedValue = strtol(optarg, &endPtr, 10);
+      if (errno != 0 || *endPtr != '\0')
+      {
+        fprintf(stderr, "Błąd! Nieprawidłowa wartość dla -t: %s!\n", optarg);
+        return -1;
+      }
+      flags->iter = (int)parsedValue;
+      break;
+    case 'a':
+      flags->algorithmName = optarg;
+      break;
+    case 'b':
+      flags->isBinary = true;
+      flags->outputFile = optarg;
+      break;
+    case 's':
+      errno = 0;
+      parsedValue = strtol(optarg, &endPtr, 10);
+      if (errno != 0 || *endPtr != '\0')
+      {
+        fprintf(stderr, "Błąd! Nieprawidłowa wartość dla -s: %s!\n", optarg);
+        return -1;
+      }
+      flags->seed = (int)parsedValue;
+      flags->isSeedSet = true;
+      break;
+    case '?':
+      fprintf(stderr, "Błąd! Nieznana flaga lub brak argumentu do opcji!\n");
+      return -1;
+    }
+  }
+  return 0;
 }
