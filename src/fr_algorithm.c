@@ -1,6 +1,8 @@
 #include "fr_algorithm.h"
 #include <math.h>
 
+/* Główna funkcja algorytmu Fruchtermana-Reingolda.
+ * Oblicza siły odpychania i przyciągania między wierzchołkami. */
 void fruchtermanReingold(Graph *graph, int iterations, double width,
                          double height)
 {

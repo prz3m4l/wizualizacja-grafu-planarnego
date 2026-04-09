@@ -23,6 +23,7 @@ typedef struct
   int admissibleCount;
 } Fragment;
 
+/* Zwalnia pamięć dynamiczną zaalokowaną dla elementów w tablicy fragmentów. */
 static void freeFragments(Fragment *fragments, int count)
 {
   if (fragments == NULL)
@@ -38,6 +39,8 @@ static void freeFragments(Fragment *fragments, int count)
   free(fragments);
 }
 
+/* Funkcja pomocnicza wykorzystująca DFS do znajdowania cyklu w grafie.
+ * Zapisuje znaleziony cykl do tablicy 'cycles'. */
 static bool dfsFindCycle(const Graph *graph, int currentVertex,
                          int parentVertex, int *parents, int *cycles,
                          int *cycleLength, bool *visited)
@@ -78,6 +81,8 @@ static bool dfsFindCycle(const Graph *graph, int currentVertex,
   return false;
 }
 
+/* Zwraca indeks sąsiada 'v' na liście sąsiedztwa wierzchołka 'u'.
+ * Jeśli 'v' nie jest sąsiadem 'u', zwraca -1. */
 static int getNeighbourIndex(const Graph *graph, int u, int v)
 {
   for (int i = 0; i < graph->vertices[u].count; i++)
@@ -88,6 +93,8 @@ static int getNeighbourIndex(const Graph *graph, int u, int v)
   return -1;
 }
 
+/* Funkcja sprawdzająca planarność samego fragmentu (podgrafu) w izolacji.
+ * Wyciąga fragment do osobnej struktury Graph i rekurencyjnie sprawdza isGraphPlanar. */
 static bool checkFragmentPlanarity(const Graph *graph, Fragment *f)
 {
   int subV = f->verticesCount + f->contactCount;
@@ -173,6 +180,7 @@ static bool checkFragmentPlanarity(const Graph *graph, Fragment *f)
   return result;
 }
 
+/* Inicjalizuje pierwsze dwie ściany w algorytmie DMP, opierając się na znalezionym cyklu. */
 static Face *initDmpFaces(int *cycle, int cycleLength, int verticesNum,
                           bool **vertexDrawnOut, int *facesCountOut)
 {
@@ -227,6 +235,7 @@ static Face *initDmpFaces(int *cycle, int cycleLength, int verticesNum,
   return faces;
 }
 
+/* Sprawdza, czy dany wierzchołek 'v' leży na obwodzie określonej ściany. */
 static bool isVertexOnFace(int v, const Face *face)
 {
   for (int i = 0; i < face->boundaryCount; i++)
@@ -237,6 +246,7 @@ static bool isVertexOnFace(int v, const Face *face)
   return false;
 }
 
+/* Sprawdza, w których ścianach (faces) fragment może zostać bezpiecznie narysowany. */
 static bool findAdmissibleFaces(Fragment *frag, const Face *faces, int facesCount)
 {
   frag->admissibleFaces = (int *)malloc(facesCount * sizeof(int));
@@ -266,6 +276,7 @@ static bool findAdmissibleFaces(Fragment *frag, const Face *faces, int facesCoun
   return true;
 }
 
+/* Funkcja DFS rekurencyjnie budująca strukturę fragmentu z nienarysowanych krawędzi. */
 static void dfsBuildFragment(const Graph *graph, int u, bool *vertexDrawn,
                              bool **edgeDrawn, int **edgeVisited, int visitId,
                              Fragment *frag)
@@ -303,6 +314,7 @@ static void dfsBuildFragment(const Graph *graph, int u, bool *vertexDrawn,
   }
 }
 
+/* Przeszukuje graf i znajduje wszystkie pozostałe nienarysowane fragmenty. */
 static Fragment *getAllFragments(const Graph *graph, bool *vertexDrawn,
                                  bool **edgeDrawn, int **edgeVisited, int visitId, int *fragmentsCount)
 {
@@ -402,6 +414,7 @@ static Fragment *getAllFragments(const Graph *graph, bool *vertexDrawn,
   return fragments;
 }
 
+/* Szuka ścieżki wewnątrz danego fragmentu pomiędzy dwoma punktami kontaktowymi. */
 static bool dfsFindPath(const Graph *graph, int current, int startNode,
                         Fragment *frag, bool **edgeDrawn, bool *visited,
                         int *tempPath, int depth, int **outPath,
@@ -447,6 +460,7 @@ static bool dfsFindPath(const Graph *graph, int current, int startNode,
   return false;
 }
 
+/* Określa i zwraca ścieżkę do narysowania w obrębie danego fragmentu. */
 static int *findPathBetweenContacts(const Graph *graph, Fragment *frag,
                                     bool **edgeDrawn, int *pathLength)
 {
@@ -494,6 +508,7 @@ static int *findPathBetweenContacts(const Graph *graph, Fragment *frag,
   return finalPath;
 }
 
+/* Osadza ścieżkę wewnątrz ściany, co powoduje podzielenie ściany na dwie mniejsze. */
 static bool embedPathAndSplitFace(Face **facesPtr, int *facesCount,
                                   int targetFaceIdx, int *path, int pathLength,
                                   bool *vertexDrawn, bool **edgeDrawn, const Graph *graph)
@@ -579,6 +594,8 @@ static bool embedPathAndSplitFace(Face **facesPtr, int *facesCount,
   return true;
 }
 
+/* Główna funkcja algorytmu sprawdzającego planarność grafu (Algorytm DMP).
+ * Zwraca true, jeśli graf można narysować na płaszczyźnie bez przecięć krawędzi. */
 bool isGraphPlanar(Graph *graph)
 {
   int V = graph->verticesCount;
@@ -825,6 +842,8 @@ bool isGraphPlanar(Graph *graph)
   return isPlanar;
 }
 
+/* Funkcja weryfikująca planarność. Usuwa problematyczne krawędzie jeśli graf
+ * nie jest planarny, zwracając liczbę usuniętych krawędzi. */
 int makeGraphPlanar(Graph *graph)
 {
   if (isGraphPlanar(graph))

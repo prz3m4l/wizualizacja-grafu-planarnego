@@ -11,6 +11,9 @@
 #include <time.h>
 #include <unistd.h>
 
+/* Punkt wejścia do programu.
+ * Inicjalizuje konfigurację z flag CLI, wczytuje graf, naprawia ewentualną niespójność
+ * i nieplanarność, a następnie uruchamia wybrany algorytm i zapisuje wynik do pliku. */
 int main(int argc, char *argv[])
 {
   CliFlags flags;

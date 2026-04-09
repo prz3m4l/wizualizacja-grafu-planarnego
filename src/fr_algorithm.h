@@ -9,7 +9,8 @@
 
 #include "graph.h"
 
-/* Algorytm Fruchtermana-Reingolda do rysowania grafów planarnych */
+/* Algorytm Fruchtermana-Reingolda do rozmieszczania wierzchołków grafu.
+ * Opiera się na symulacji sił fizycznych między wierzchołkami. */
 void fruchtermanReingold(Graph *g, int iterations, double width, double height);
 
 #endif

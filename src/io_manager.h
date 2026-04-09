@@ -26,6 +26,8 @@ typedef struct
   char *algorithmName;
 } CliFlags;
 
+/* Analizuje flagi wiersza poleceń i zapisuje konfigurację w strukturze CliFlags.
+ * Zwraca 0 po pomyślnym przetworzeniu, w przeciwnym razie -1. */
 int parseCliFlags(int argc, char *argv[], CliFlags *flags);
 
 /* Zapisuje wyniki algorytmów do pliku wyjściowego */
@@ -34,13 +36,13 @@ void saveResults(FILE *outputFiles, Graph *graf, bool isBinary);
 /* Wczytuje dane o grafie z pliku i inicjalizuje strukturę Graf */
 int loadGraph(FILE *inputFiles, Graph *graf, int width, int height);
 
-/* Sprawdza czy procesor jest Little-Endian */
+/* Zwraca 1, jeśli architektura to Little-Endian, w przeciwnym razie 0 */
 int isLittleEndian(void);
 
-/* Zamienia bajty w int na Big-Endian, kiedy to potrzebne */
+/* Konwertuje 32-bitową liczbę całkowitą z natywnego porządku bajtów na Big-Endian */
 uint32_t toBigEndianUint32(uint32_t val);
 
-/* Zamienia bajty w double na Big-Endian, kiedy to potrzebne */
+/* Konwertuje liczbę zmiennoprzecinkową podwójnej precyzji z natywnego porządku bajtów na Big-Endian */
 double toBigEndianDouble(double val);
 
 #endif

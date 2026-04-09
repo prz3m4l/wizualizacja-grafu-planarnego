@@ -9,6 +9,9 @@ typedef struct
   double stiffness; /* stała sprężystości (k_ij) */
 } Spring;
 
+/* Pomocnicza funkcja obliczająca odległości najkrótszych ścieżek
+ * między wszystkimi parami wierzchołków (algorytm BFS).
+ * Zwraca dwuwymiarową tablicę odległości (macierz). */
 static int **calculateDistances(Graph *graph)
 {
   int **distanceMatrix = malloc(graph->verticesCount * sizeof(int *));
@@ -76,6 +79,10 @@ static int **calculateDistances(Graph *graph)
   return distanceMatrix;
 }
 
+/* Główna funkcja algorytmu Kamady-Kawai.
+ * Ustala docelowe pozycje wierzchołków na podstawie macierzy odległości grafowych,
+ * tworząc wirtualne sprężyny między wszystkimi parami wierzchołków.
+ * Następnie iteracyjnie optymalizuje pozycje wierzchołków minimalizując energię sprężyn. */
 void kamadaKawaiLayout(Graph *graph, int width, int height, int iterations)
 {
   int **distances = calculateDistances(graph);

@@ -1,5 +1,8 @@
 #include "graph.h"
 
+/* Funkcja dodająca krawędź między wierzchołkami v i u
+ * poprzez dodanie u do listy sąsiadów wierzchołka v.
+ * Dynamicznie alokuje lub reallokuje pamięć w razie potrzeby. */
 int addVertex(Node *vertices, int v, int u)
 {
   Node *vertex = &vertices[v];
@@ -31,6 +34,8 @@ int addVertex(Node *vertices, int v, int u)
   return 0;
 }
 
+/* Funkcja zwalniająca całą pamięć zaalokowaną dla struktury grafu,
+ * włączając w to listy sąsiedztwa, krawędzie oraz tablice współrzędnych. */
 void freeGraph(Graph *graph)
 {
   if (!graph)
@@ -67,6 +72,8 @@ void freeGraph(Graph *graph)
   graph->dy = NULL;
 }
 
+/* Pomocnicza funkcja realizująca przeszukiwanie grafu w głąb (DFS).
+ * Oznacza odwiedzone wierzchołki w tablicy visited. */
 static void dfsVisit(const Graph *graph, int currentVertex, bool *visited)
 {
   visited[currentVertex] = true;
@@ -80,6 +87,8 @@ static void dfsVisit(const Graph *graph, int currentVertex, bool *visited)
   }
 }
 
+/* Funkcja dodająca dodatkową krawędź do grafu w celu zapewnienia spójności.
+ * Aktualizuje zarówno listę sąsiedztwa, jak i tablicę krawędzi. */
 static int addExtraEdge(Graph *graph, int v, int u)
 {
   if (addVertex(graph->vertices, v, u) == -1)
@@ -108,6 +117,8 @@ static int addExtraEdge(Graph *graph, int v, int u)
   return 0;
 }
 
+/* Funkcja sprawdzająca spójność grafu za pomocą algorytmu DFS.
+ * Jeśli graf jest niespójny, dodaje brakujące krawędzie, aby go połączyć. */
 int ensureConnectivity(Graph *graph)
 {
   bool repaired = false;

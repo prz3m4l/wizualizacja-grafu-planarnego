@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+/* Sprawdza czy dany system operacyjny/procesor operuje w formacie Little-Endian.
+ * Zwraca wartość większą od zera (true), jeśli tak. */
 int isLittleEndian(void)
 {
   uint16_t test = 0x0001;
@@ -11,6 +13,8 @@ int isLittleEndian(void)
   return byte == 0x01;
 }
 
+/* Konwertuje 32-bitową liczbę z formatu natywnego (host) na format Big-Endian.
+ * Pamięć jest przemieszczana za pomocą tymczasowych tablic bajtów. */
 uint32_t toBigEndianUint32(uint32_t val)
 {
   if (!isLittleEndian())
@@ -29,6 +33,8 @@ uint32_t toBigEndianUint32(uint32_t val)
   return result;
 }
 
+/* Konwertuje 64-bitową liczbę zmiennoprzecinkową z formatu natywnego (host)
+ * na format Big-Endian poprzez zmianę kolejności ośmiu bajtów. */
 double toBigEndianDouble(double val)
 {
   if (!isLittleEndian())
@@ -54,6 +60,7 @@ typedef struct
   int capacity;
 } VertexList;
 
+/* Inicjalizuje pustą listę wierzchołków, prealokując początkową pojemność. */
 int initVertexList(VertexList *list)
 {
   list->count = 0;
@@ -67,7 +74,8 @@ int initVertexList(VertexList *list)
   return 0;
 }
 
-// Dodaje nazwę tylko jeśli jej jeszcze nie ma
+/* Dodaje unikalną nazwę wierzchołka do tymczasowej listy odczytu.
+ * Zwraca indeks istniejącego lub nowo dodanego wierzchołka w liście, albo -1 na wypadek błędu. */
 int addUniqueVertex(VertexList *list, const char *name)
 {
   // Sprawdź czy już istnieje
@@ -100,6 +108,7 @@ int addUniqueVertex(VertexList *list, const char *name)
   return list->count++;
 }
 
+/* Czyści zasoby zaalokowane przez listę wierzchołków (zwalnia stringi i samą listę). */
 void cleanupVertexList(VertexList *list)
 {
   for (int i = 0; i < list->count; i++)
@@ -107,6 +116,8 @@ void cleanupVertexList(VertexList *list)
   free(list->names);
 }
 
+/* Wczytuje i parsuje krawędzie z podanego pliku wejściowego.
+ * Zapisuje wynik do wyjściowej tablicy krawędzi i aktualizuje listę unikalnych wierzchołków. */
 static int readEdges(FILE *inputFile, Edge **edgesOut, int *countOut, VertexList *vList)
 {
   char buff[4096];
@@ -219,6 +230,8 @@ static int readEdges(FILE *inputFile, Edge **edgesOut, int *countOut, VertexList
   return 0;
 }
 
+/* Pomocnicza funkcja inicjalizująca tablice i inne pola wewnątrz struktury grafu
+ * w oparciu o znaną liczbę wierzchołków i krawędzi. */
 static int allocateGraph(Graph *graph, int vCount, int eCount)
 {
   graph->verticesCount = vCount;
@@ -244,6 +257,9 @@ static int allocateGraph(Graph *graph, int vCount, int eCount)
   return 0;
 }
 
+/* Główna funkcja ładująca definicję grafu z otwartego strumienia pliku.
+ * Obsługuje inicjalizację pomocniczych struktur i tworzenie wierzchołków
+ * oraz przypisuje początkowe losowe współrzędne x/y w podanym wymiarze. */
 int loadGraph(FILE *inputFile, Graph *graph, int width, int height)
 {
   VertexList vList;
@@ -308,6 +324,9 @@ int loadGraph(FILE *inputFile, Graph *graph, int width, int height)
   return 0;
 }
 
+/* Zapisuje ułożony graf (nazwy oraz współrzędne węzłów) do strumienia wyjściowego.
+ * Może zapisać dane w czytelnym formacie tekstowym, lub w binarnym, odpowiednio
+ * obsługując wtedy system Endian. */
 void saveResults(FILE *outputFile, Graph *graph, bool isBinary)
 {
   if (isBinary == false)
@@ -335,6 +354,8 @@ void saveResults(FILE *outputFile, Graph *graph, bool isBinary)
   }
 }
 
+/* Analizuje argumenty wiersza poleceń uruchomienia programu za pomocą funkcji getopt.
+ * Zapisuje poprawne argumenty do struktury CliFlags. Zwraca -1 gdy użyto błędnej flagi. */
 int parseCliFlags(int argc, char *argv[], CliFlags *flags)
 {
   int opt = 0;
