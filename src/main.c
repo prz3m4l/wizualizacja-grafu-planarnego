@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
   CliFlags flags;
   if (parseCliFlags(argc, argv, &flags) == -1)
   {
-    return -1;
+    return 1;
   }
 
   if (flags.isSeedSet)
@@ -36,27 +36,27 @@ int main(int argc, char *argv[])
   {
     fprintf(stderr, "Błąd! Wartości width/height muszą być w zakresie [1, "
                     "100000], iter w zakresie [1, 100000]!\n");
-    return -1;
+    return 1;
   }
 
   if (flags.inputFile == NULL || flags.outputFile == NULL)
   {
     fprintf(stderr, "Błąd! Nie podano pliku wejściowego lub wyjściowego!\n");
-    return -1;
+    return 1;
   }
 
   if (flags.isText == true && flags.isBinary == true)
   {
     fprintf(stderr, "Błąd! Wybrano jednocześnie zapis wyników w formie "
-                    "tekstowej i binarnej!");
-    return -1;
+                    "tekstowej i binarnej!\n");
+    return 1;
   }
 
   FILE *inFile = fopen(flags.inputFile, "r");
   if (inFile == NULL)
   {
     fprintf(stderr, "Błąd! Nie można otworzyć pliku wejściowego!\n");
-    return -1;
+    return 1;
   }
 
   /* wczytywanie grafu */
@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
   {
     fprintf(stderr, "Błąd! Nie można wczytać grafu z pliku!\n");
     fclose(inFile);
-    return -1;
+    return 1;
   }
 
   int removed = makeGraphPlanar(&graph);
@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
     fprintf(stderr, "Błąd! Nie można zaalokować pamięci podczas naprawy planarności!\n");
     freeGraph(&graph);
     fclose(inFile);
-    return -1;
+    return 1;
   }
 
   int connected = ensureConnectivity(&graph);
@@ -83,7 +83,7 @@ int main(int argc, char *argv[])
     fprintf(stderr, "Błąd! Nie można zaalokować pamięci podczas inicjalizacji tablicy postępu (visited)!\n");
     fclose(inFile);
     freeGraph(&graph);
-    return -1;
+    return 1;
   }
   else if (connected == 0)
   {
@@ -103,7 +103,7 @@ int main(int argc, char *argv[])
   {
     fprintf(stderr, "Błąd! Podana nazwa algorytmu jest nieprawidłowa!\n");
     freeGraph(&graph);
-    return -1;
+    return 1;
   }
 
   FILE *outFile = NULL;
@@ -119,7 +119,7 @@ int main(int argc, char *argv[])
   {
     fprintf(stderr, "Błąd! Nie można otworzyć pliku wyjściowego do zapisu!\n");
     freeGraph(&graph); /* zwolnienie pamięci przed wyrzuceniem błędu */
-    return -1;
+    return 1;
   }
 
   saveResults(outFile, &graph, flags.isBinary);

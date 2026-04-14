@@ -182,7 +182,8 @@ static bool checkFragmentPlanarity(const Graph *graph, Fragment *f)
 
 /* Inicjalizuje pierwsze dwie ściany w algorytmie DMP, opierając się na znalezionym cyklu. */
 static Face *initDmpFaces(int *cycle, int cycleLength, int verticesNum,
-                          bool **vertexDrawnOut, int *facesCountOut)
+                          bool **vertexDrawnOut, int *facesCountOut,
+                          int *maxFacesOut)
 {
   bool *vertexDrawn = (bool *)calloc(verticesNum, sizeof(bool));
   if (vertexDrawn == NULL)
@@ -197,7 +198,7 @@ static Face *initDmpFaces(int *cycle, int cycleLength, int verticesNum,
   }
   *vertexDrawnOut = vertexDrawn;
 
-  int maxFaces = 2 * verticesNum;
+  int maxFaces = 2 * verticesNum > 4 ? 2 * verticesNum : 4;
   Face *faces = malloc(maxFaces * sizeof(Face));
   if (faces == NULL)
   {
@@ -205,6 +206,7 @@ static Face *initDmpFaces(int *cycle, int cycleLength, int verticesNum,
     free(vertexDrawn);
     return NULL;
   }
+  *maxFacesOut = maxFaces;
 
   faces[0].boundaryCount = cycleLength;
   faces[0].boundaryVertices = malloc(cycleLength * sizeof(int));
@@ -509,7 +511,7 @@ static int *findPathBetweenContacts(const Graph *graph, Fragment *frag,
 }
 
 /* Osadza ścieżkę wewnątrz ściany, co powoduje podzielenie ściany na dwie mniejsze. */
-static bool embedPathAndSplitFace(Face **facesPtr, int *facesCount,
+static bool embedPathAndSplitFace(Face **facesPtr, int *facesCount, int *maxFaces,
                                   int targetFaceIdx, int *path, int pathLength,
                                   bool *vertexDrawn, bool **edgeDrawn, const Graph *graph)
 {
@@ -565,6 +567,22 @@ static bool embedPathAndSplitFace(Face **facesPtr, int *facesCount,
   for (int i = 1; i < pathLength - 1; i++)
   {
     newBoundary2[c2++] = path[i];
+  }
+
+  if (*facesCount >= *maxFaces)
+  {
+    int newMaxFaces = (*maxFaces) * 2;
+    Face *tmp = realloc(*facesPtr, newMaxFaces * sizeof(Face));
+    if (tmp == NULL)
+    {
+      fprintf(stderr, "Błąd! Nie można powiększyć tablicy ścian przez realloc!\n");
+      free(newBoundary1);
+      free(newBoundary2);
+      return false;
+    }
+    *facesPtr = tmp;
+    faces = *facesPtr;
+    *maxFaces = newMaxFaces;
   }
 
   free(target.boundaryVertices);
@@ -648,8 +666,9 @@ bool isGraphPlanar(Graph *graph)
 
   bool *vertexDrawn = NULL;
   int facesCount = 0;
+  int maxFaces = 0;
   Face *faces =
-      initDmpFaces(cycles, cycleLength, V, &vertexDrawn, &facesCount);
+      initDmpFaces(cycles, cycleLength, V, &vertexDrawn, &facesCount, &maxFaces);
 
   if (faces == NULL)
   {
@@ -811,7 +830,7 @@ bool isGraphPlanar(Graph *graph)
       continue;
     }
 
-    if (!embedPathAndSplitFace(&faces, &facesCount, targetFaceIdx, path,
+    if (!embedPathAndSplitFace(&faces, &facesCount, &maxFaces, targetFaceIdx, path,
                                pathLength, vertexDrawn, edgeDrawn, graph))
     {
       isPlanar = false;

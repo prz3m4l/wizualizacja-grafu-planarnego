@@ -137,7 +137,7 @@ static int readEdges(FILE *inputFile, Edge **edgesOut, int *countOut, VertexList
 
   while (fgets(buff, sizeof(buff), inputFile))
   {
-    if (buff[0] == '\n' || buff[0] == '#')
+    if (buff[0] == '\n' || buff[0] == '\r' || buff[0] == '#')
       continue;
 
     if (strchr(buff, '\n') == NULL && !feof(inputFile))
@@ -201,7 +201,8 @@ static int readEdges(FILE *inputFile, Edge **edgesOut, int *countOut, VertexList
 
     if (idA == idB)
     {
-      fprintf(stderr, "Ostrzeżenie: Wykryto pętlę własną dla wierzchołka %s\n", nameA);
+      fprintf(stderr, "Ostrzeżenie: Pominięto pętlę własną dla wierzchołka \"%s\" — algorytm DMP nie obsługuje self-loop'ów.\n", nameA);
+      continue;
     }
 
     edges[count].idA = idA;

@@ -1,3 +1,4 @@
 *.o
 *.exe
 wizualizacja_grafu
+*.py

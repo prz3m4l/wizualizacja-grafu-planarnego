@@ -1,5 +1,5 @@
 CC      = gcc
-CFLAGS  = -Wall -Wextra -pedantic -O2 -std=c11
+CFLAGS  = -Wall -Wextra -pedantic -O2 -std=gnu11
 LDFLAGS = -lm
 EXEC    = wizualizacja_grafu
 

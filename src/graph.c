@@ -123,7 +123,7 @@ int ensureConnectivity(Graph *graph)
 {
   bool repaired = false;
   if (graph->verticesCount == 0)
-    return 1;
+    return 2;
 
   bool *visited = calloc(graph->verticesCount, sizeof(bool));
   if (visited == NULL)
@@ -147,5 +147,5 @@ int ensureConnectivity(Graph *graph)
     }
   }
   free(visited);
-  return repaired ? 0 : 1;
+  return repaired ? 0 : 2;
 }
