@@ -1,5 +1,7 @@
 # Wizualizacja grafu planarnego
 
+_**UWAGA!** Część 2. projektu znajduje się w innym repozytorium zgodnie z wymaganiami projektu: https://github.com/prz3m4l/wgp-gui_
+
 Program wyznacza dwuwymiarowe współrzędne wierzchołków grafu planarnego
 na podstawie listy krawędzi.
 
